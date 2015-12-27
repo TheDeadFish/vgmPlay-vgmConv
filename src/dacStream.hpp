@@ -24,6 +24,8 @@ public:
 	void Flush(int targetSamp);
 	void dsOutput(int targetSamp);
 	bool dsWrite(int targetSamp, unsigned char *data);
+	bool start(int targetSamp, int blockId,
+		int seekPos, int mode, int length);
 };
 
 #endif
