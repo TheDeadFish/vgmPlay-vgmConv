@@ -1,5 +1,8 @@
 #include "stdshit.h"
+#include <string.h>
+#include <stdio.h>
 #include "2612Unes.hpp"
+
 #define OPN_SLOT(N) ((N>>2)&3)
 static inline int neg2ToNeg1(int in) {
 	return (in == -2) ? -1 : in; }
@@ -52,8 +55,9 @@ void ym2612Unes::QWrite(int port, unsigned char *data)
 {
 	if(auto wdat = isValidWrite(port, (byte*)data))
 	{
-		if((wdat.addr & 0xf0) != 0xA0)
-			RegTable[wdat.addr] = wdat.data;
+		if((wdat.addr & 0xf0) != 0xA0) {
+			if(wdat.addr == 0x28) wdat.addr = wdat.data & 7;
+			RegTable[wdat.addr] = wdat.data; }
 		ei(mode == 3)
 			freqHdw(wdat.addr, wdat.data); 
 	}
@@ -65,6 +69,7 @@ bool ym2612Unes::Write(int port, unsigned char *data)
 	auto wdat = isValidWrite(port, (byte*)data);
 	if(wdat.addr == 0) return false;
 	if((wdat.addr & 0xf0) != 0xA0) {
+		if(wdat.addr == 0x28) wdat.addr = wdat.data & 7;
 		if(RegTable[wdat.addr] == wdat.data) return false;
 		RegTable[wdat.addr] = wdat.data; return true; }
 
