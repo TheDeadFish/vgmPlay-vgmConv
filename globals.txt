@@ -1,0 +1,5 @@
+*vgmConv*
+*ZN5codec10eventWriteEiiPh
+*ZN5codec8dacWriteEi
+*ZN7NextGet5RangeIiEEvT_
+*ZN8MemWrite5WriteIcEEiT_
