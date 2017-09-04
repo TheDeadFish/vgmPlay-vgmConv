@@ -15,27 +15,27 @@ void vgmEvent::Write(int targetSamp, int event, unsigned char *data)
 	// now curSamp is up to date, write event
 	switch(event){	
 		case EventPSGP:
-			outData->Write((char)0x50);
-			outData->WriteInd((char*)data);
+			outData->write8(0x50);
+			outData->write8p(data);
 			break;
 		case EventYMP0:
-			outData->Write((char)0x52);
-			outData->WriteInd((short*)data);
+			outData->write8(0x52);
+			outData->write16p(data);
 			break;
 		case EventYMP1:
-			outData->Write((char)0x53);
-			outData->WriteInd((short*)data);
+			outData->write8(0x53);
+			outData->write16p(data);
 			break;
 		case EventSEEK:
-			outData->Write((char)0xe0);
-			outData->WriteInd((long*)data);
+			outData->write8(0xe0);
+			outData->write32p(data);
 			break;
 		case EventPSGS:
-			outData->Write((char)0x4f);
-			outData->WriteInd((char*)data);
+			outData->write8(0x4f);
+			outData->write8p(data);
 			break;
 		case Event_END:
-			outData->Write((char)0x66);
+			outData->write8(0x66);
 			break;
 		//default:
 			// This function does not handle error

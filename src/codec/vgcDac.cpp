@@ -66,23 +66,23 @@ void vgcDac::rleWrite(int size)
 	
 	// output reduced range data
 	if(size == 3){
-		outData->Write<char>(VGC_DAC1_4 | (byteMin & 0x0f));
+		outData->write8(VGC_DAC1_4 | (byteMin & 0x0f));
 		//printf("%x ", (VGC_DAC1_4 | (byteMin & 0x0f)) & 255);
 	}else{
-		outData->Write<char>(VGC_DAC1_8 | (byteMin & 0x0f));
+		outData->write8(VGC_DAC1_8 | (byteMin & 0x0f));
 		//printf("%x ", (VGC_DAC1_8 | (byteMin & 0x0f)) & 255);
 	}
 	char tempByte=0;
 	int bitPos=0;
 	char *ptrCmd8n = &cmd8n[index];
 	int count = (i - index) - 1;
-	outData->Write<char>(count);
+	outData->write8(count);
 	//printf("%x ", count & 255);
 	do{
 		tempByte |= (((*ptrCmd8n++ - byteMin)) << bitPos);
 		if(((size == 3)&&((count & 3) == 0))||
 		(size != 3)&&((count & 7) == 0)){
-			outData->Write<char>(tempByte);
+			outData->write8(tempByte);
 			//printf("%d:%x ", count, tempByte & 255);
 			tempByte = 0;
 			bitPos = 0;
@@ -114,14 +114,14 @@ void vgcDac::rleFlush(void)
 		//printf("%d %f\n", size, total);
 		// Output average encoded
 		int temp = int(total*256)+1;
-		outData->Write<char>(VGC_AvDac + (temp >> 8));
-		outData->Write<char>(size-1);
-		//outData->Write<char>(temp >> 8);
-		outData->Write<char>(temp);
+		outData->write8(VGC_AvDac + (temp >> 8));
+		outData->write8(size-1);
+		//outData->write8(temp >> 8);
+		outData->write8(temp);
 		CurOutPos += size;
 	}
 	while(idx8n - CurOutPos)
-		outData->Write<char>(cmd8n[CurOutPos++]);
+		outData->write8(cmd8n[CurOutPos++]);
 		idx8n = 0;
 	
 	}else{
@@ -144,12 +144,12 @@ void vgcDac::rleFlush(void)
 				int runLen = (diff >> 1) - 1;
 				if(runLen > 16) 
 					runLen = 16;
-				outData->Write<char>(VGC_DAC1_2 + (runLen-1));
+				outData->write8(VGC_DAC1_2 + (runLen-1));
 				//printf("%x, ", VGC_DAC1_2 + (runLen-1));
 				//if(screbVar >= 0x5E59F)
 				//printf("n: %d\n", runLen + 1);
 				do{
-					outData->Write<char>((cmd8n[CurOutPos] & 0x0F) | ((cmd8n[CurOutPos + 1] & 0x0F) << 4));
+					outData->write8((cmd8n[CurOutPos] & 0x0F) | ((cmd8n[CurOutPos + 1] & 0x0F) << 4));
 					//printf("%x, ", (cmd8n[CurOutPos] & 0x0F) | ((cmd8n[CurOutPos + 1] & 0x0F) << 4));
 					CurOutPos += 2;
 				}while(runLen--);
@@ -159,7 +159,7 @@ void vgcDac::rleFlush(void)
 			while(CurOutPos < NewOutPos2){
 				//if(screbVar >= 0x5E59F)
 				//printf("%x, ", cmd8n[CurOutPos]);
-				outData->Write<char>(cmd8n[CurOutPos++]);
+				outData->write8(cmd8n[CurOutPos++]);
 			}
 			//if(screbVar >= 0x5E59F)
 			//printf("\n");

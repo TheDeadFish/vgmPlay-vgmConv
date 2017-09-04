@@ -16,7 +16,7 @@ void vgmDac::Write(int targetSamp)
 		int delay = targetSamp - *curSamp;
 		if(delay > 15)
 			delay = 15;
-		outData->Write<char>(0x80 + delay);
+		outData->write8(0x80 + delay);
 		*curSamp += delay;
 		*curSamp = vgmCodec_Delay(targetSamp, *curSamp, outData);
 	}
@@ -29,7 +29,7 @@ void vgmDac::Flush(int targetSamp)
 		int delay = targetSamp - *curSamp;
 		if(delay > 15)
 			delay = 15;
-		outData->Write<char>(0x80 + delay);
+		outData->write8(0x80 + delay);
 		*curSamp += delay;
 	}
 	*curSamp = vgmCodec_Delay(targetSamp, *curSamp, outData);

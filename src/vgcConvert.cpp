@@ -28,9 +28,8 @@ int VgmConv::vgcConvert(vgcFile& vgcInfo)
 		loopIndexP = NULL;
 	
 	// setup variables
-	outData.Alloc(0x100000);
-	std::auto_ptr<eventCodec> EC(new (nothrow) vgmEvent());
-	std::auto_ptr<dacCodec> DC(new (nothrow) vgmDac());
+	std::unique_ptr<eventCodec> EC(new (nothrow) vgmEvent());
+	std::unique_ptr<dacCodec> DC(new (nothrow) vgmDac());
 	if((EC.get() == NULL)||(DC.get() == NULL))
 		return VGX_MEM_ERR;
 		

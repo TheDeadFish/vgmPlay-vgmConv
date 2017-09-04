@@ -1,81 +1,34 @@
 #include "MemWrite.hpp"
-#include <new>
 
-bool MemWrite::Alloc(int BlockSizeIn)
+MemWrite* MemWrite::Grow(int size)
 {
-	Free();
-	void* tmp = malloc(BlockSizeIn);
-	if(!tmp)
-		return false;
-
-	// Update structure
-	Base = (char*)tmp;
-	CurPos = Base + 0;
-	CurMem = Base + BlockSizeIn;
-	BlockSize = BlockSizeIn;
-	return true;
-}
-
-void MemWrite::Grow(int size)
-{
-	// Create local aposolute data
+	// calculate indexes offsets
 	int CurPosOffs = curIndex();
 	int CurMemOffs = CurMem - Base; 
-	int AllocSize = CurMemOffs;
-
-	// Calculate required size
-	do{
-		AllocSize += BlockSize;
-	}while(AllocSize <= (CurPosOffs + size));
+	int NewMemOffs = CurPosOffs + size;
 	
+	// calcxulate required size
+	CurMemOffs += (CurMemOffs >> 1);
+	if(CurMemOffs < NewMemOffs)
+		CurMemOffs = NewMemOffs;
+		
 	// Reallocate
-	void* tmp = realloc(Base, AllocSize);
+	void* tmp = realloc(Base, CurMemOffs);
 	if(!tmp)
 		longjmp(*jmpBuf, excpCode);
 		
 	// Update structure
 	Base = (char*)tmp;
 	CurPos = Base + CurPosOffs;
-	CurMem = Base + AllocSize;
+	CurMem = Base + CurMemOffs;		
+	return this;
 }
 
-int MemWrite::Array(char *buffer, int Size)
-{
-	if(CurMem <= (CurPos + Size))
-		this->Grow(Size);
-	// Memory has now been grown enough
-	asm volatile (
-	"	mov %3,%%ecx			\n"
-	"	shrl %%ecx				\n"
-	"	shrl %%ecx				\n"
-	"	rep movsl				\n"
-	"	mov	%3,%%ecx			\n"
-	"	and $3,%%ecx			\n"
-	"	rep movsb				\n"
-	: "=D"(CurPos)
-	: "S"(buffer), "D"(CurPos), "g"(Size)
-	: "ecx");
-	return(Size);
-}
-
-int MemWrite::WriteOVFB(char a)
-{
-	this->Grow(1);
-	*CurPos++ = a;
-	return(1);
-}
-
-int MemWrite::WriteOVFW(short a)
-{
-	this->Grow(2);
-	*(short*)CurPos = a;
-	return(2);
-}
-
-int MemWrite::WriteOVFL(int a)
-{
-	this->Grow(4);
-	*(int*)CurPos = a;
-	CurPos += 4;
-	return(4);
-}
+#define DEF_WRITE(n1,n2,t,s) \
+	void MemWrite::n1(t v) { MemWrite* This = this; if(CurPos+s >= CurMem) \
+		This = Grow(s); *(t*)(This->CurPos) = v; This->CurPos += s; } \
+	void MemWrite::n2(void* p) { MemWrite* This = this; if(CurPos+s >= CurMem) \
+		This = Grow(s); *(t*)(This->CurPos) = *(t*)p; This->CurPos += s; }
+DEF_WRITE(write8,write8p,char,1);
+DEF_WRITE(write16,write16p,short,2);
+DEF_WRITE(write32,write32p,int,4);

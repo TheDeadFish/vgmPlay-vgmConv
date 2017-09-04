@@ -9,27 +9,6 @@
 #include <new>
 using namespace std;
 
-
-// as usual the C++ std template library is worthless
-// alternate auto pointer: auto_ptr2
-template <class screb>
-class auto_ptr2
-{
-public:
-	auto_ptr2(){
-		poit = NULL;}
-	~auto_ptr2(){
-		if(poit)
-		delete poit;}
-	void Attatch(screb* _poit){
-		poit = _poit;}
-	screb* Get(void){
-		return poit;}
-private:
-	screb* poit;
-};
-
-
 #define MinInitBlock 16
 
 #define InitBlock_Ends(back){\
@@ -179,36 +158,34 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 	vgmPos = NxtGet(vgmInfo.mainData);
 	SndS.Unes.Init(init_dupRemove);
 	MemWrite outData;
-	if(!outData.Alloc(0x100000))
-	return VGX_MEM_ERR;
 	
 	// V1.60 dac stream filter
 	dacStream Codec;
 	Codec.vgmInfo = &vgmInfo;
 	
 	// Select codec
-	auto_ptr2<eventCodec> EC;
-	auto_ptr2<dacCodec> DC;
+	unique_ptr<eventCodec> EC;
+	unique_ptr<dacCodec> DC;
 	if(options & vgcFormat)
 	{
-		EC.Attatch( new (nothrow) vgcEvent() );
-		DC.Attatch( new (nothrow) vgcDac() );
-		if(DC.Get() == 0)
+		EC.reset( new (nothrow) vgcEvent() );
+		DC.reset( new (nothrow) vgcDac() );
+		if(DC.get() == 0)
 			return VGX_MEM_ERR;
 		if(options & avSamp)
-			((vgcDac*)DC.Get())->mode = 1;
+			((vgcDac*)DC.get())->mode = 1;
 	}
 	else
 	{
-		EC.Attatch( new (nothrow) vgmEvent() );
-		DC.Attatch( new (nothrow) vgmDac() );
-		if(DC.Get() == 0)
+		EC.reset( new (nothrow) vgmEvent() );
+		DC.reset( new (nothrow) vgmDac() );
+		if(DC.get() == 0)
 			return VGX_MEM_ERR;
 	}
-	if(EC.Get() == 0)
+	if(EC.get() == 0)
 		return VGX_MEM_ERR;
-	Codec.EC = EC.Get();
-	Codec.DC = DC.Get();
+	Codec.EC = EC.get();
+	Codec.DC = DC.get();
 	Codec.Init(&outData);
 	
 	// pass 2 exception block

@@ -18,30 +18,30 @@ void vgcEvent::Write(int targetSamp, int event, unsigned char *data)
 			case EventPSGP:
 				//printf("%d, %d\n", eventPend, EventPSGP);
 				//printf("%x, %x\n", (char)(0x20 + delay), *(char*)dataPend);
-				outData->Write((char)(VGC_PSGP + delay));
-				outData->WriteInd((char*)dataPend);
+				outData->write8((VGC_PSGP + delay));
+				outData->write8p(dataPend);
 				break;
 			case EventYMP0:
-				outData->Write((char)(VGC_YMP0 + delay));
-				outData->WriteInd((short*)dataPend);
+				outData->write8((VGC_YMP0 + delay));
+				outData->write16p(dataPend);
 				break;
 			case EventYMP1:
-				outData->Write((char)(VGC_YMP1 + delay));
-				outData->WriteInd((short*)dataPend);
+				outData->write8((VGC_YMP1 + delay));
+				outData->write16p(dataPend);
 				break;
 			case EventSEEK:
-				outData->Write((char)(VGC_SEEK + delay));
-				outData->WriteInd(dataPend + 2);
-				outData->WriteInd(dataPend + 1);
-				outData->WriteInd(dataPend + 0);
+				outData->write8((VGC_SEEK + delay));
+				outData->write8p(dataPend + 2);
+				outData->write8p(dataPend + 1);
+				outData->write8p(dataPend + 0);
 				break;
 			case EventPSGS:
-				outData->Write((char)(VGC_PSGS));
-				outData->WriteInd((char*)dataPend);
+				outData->write8((VGC_PSGS));
+				outData->write8p(dataPend);
 				delay = 0;
 				break;
 			case Event_END:
-				outData->Write((char)VGC_END);
+				outData->write8(VGC_END);
 				break;
 		}
 		*curSamp += delay;

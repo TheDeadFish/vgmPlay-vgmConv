@@ -41,7 +41,7 @@ if defined unicode (
 
 rem files and flags
 set SRCS=lib\*.cpp src\*.cpp src\vgx\*.cpp src\codec\*.cpp
-set CFLAGS=%CFLAGS2% -I./lib -I./.
+set CFLAGS=%CCFLAGS2% -I./lib -I./.
 set LFLAGS=%LFLAGS% %has_zlib%
 
 rem build vgmConv

@@ -100,24 +100,16 @@ void ym2612Unes::freqHdw(int addr, int Data)
 			holdPend[index] = -1; }
 		holdPend[index] = holdList.curIndex();
 		bool keep = holdState2[index] != Data;
-		holdList_write(keep ? 0 : -1);
+		holdList.write8(keep ? 0 : -1);
 		holdState[index] = Data;
 	} else {
 		bool keep = (RegTable[addr] != Data)
 			|| (RegTable[addr+4] != holdState[index]);
 		RegTable[addr] = Data;
 		RegTable[addr+4] = neg2ToNeg1(holdState[index]);
-		holdList_write(keep);
+		holdList.write8(keep);
 		if(keep == true) keepPend(index);
 	}
-}
-
-void ym2612Unes::holdList_write(char keep)
-{
-	if((holdList.Base == NULL)
-	&&(!holdList.Alloc(65536)))
-		longjmp(*holdList.jmpBuf, holdList.excpCode);
-	holdList.Write(keep);
 }
 
 void ym2612Unes::keepPend(int index)
