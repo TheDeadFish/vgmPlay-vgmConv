@@ -114,8 +114,8 @@ bool VgmFile_::Load(vgx_fileIo& fp)
 	FP_READ(&head.size, sizeof(head) - 4);
 	
 	// Check vgm version number
-	if(head.version > 0x00000160)
-		FILE_BAD();
+	//if(head.version > 0x00000160)
+	//	FILE_BAD();
 	
 	// Allocate buffer for file
 	int vgmSize = head.getSize();
