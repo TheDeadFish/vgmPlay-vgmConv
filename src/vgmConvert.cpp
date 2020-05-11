@@ -6,6 +6,7 @@
 #include <NextGet.hpp>
 #include <stdio.h>
 #include <string.h>
+#include <memory>
 #include <new>
 using namespace std;
 

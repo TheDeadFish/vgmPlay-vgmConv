@@ -69,7 +69,7 @@ public:
 	char *maxPos;
 	jmp_buf* jmpBuf;
 	int excpCode;
-	void Error(void)
+	[[ noreturn ]] void Error(void)
 	{	longjmp(*jmpBuf, excpCode);	}
 };
 

@@ -1,6 +1,5 @@
 #ifndef _VGMCONV_H_
 #define _VGMCONV_H_
-#include "config.h"
 #ifdef __cplusplus
 extern "C" {
 #endif

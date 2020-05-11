@@ -227,6 +227,7 @@ char* vgmFile::Save(int& memSize)
 		}
 	}
 	status = fp.status;
+	return NULL;
 }
 
 void vgcFile::Save(const nchar* name)
@@ -256,6 +257,7 @@ char* vgcFile::Save(int& memSize)
 		}
 	}
 	status = fp.status;
+	return NULL;
 }
 
 

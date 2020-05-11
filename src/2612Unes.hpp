@@ -1,5 +1,6 @@
 #ifndef _2612UNES_H_
 #define _2612UNES_H_
+#include "MemWrite.hpp"
 
 class ym2612Unes
 {

@@ -1,6 +1,5 @@
 #ifndef _XPLATFORM_H_
 #define _XPLATFORM_H_
-#include "config.h"
 
 // native string char
 #include <tchar.h>
