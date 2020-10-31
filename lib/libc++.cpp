@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <new>
 
+#ifdef _WIN32
 void* __cxa_pure_virtual = 0;
 namespace std{
 	const nothrow_t nothrow = nothrow_t();
@@ -30,3 +31,4 @@ operator delete[] (void *ptr, const std::nothrow_t&)
 {
 	::operator delete (ptr);
 }
+#endif

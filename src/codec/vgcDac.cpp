@@ -81,7 +81,7 @@ void vgcDac::rleWrite(int size)
 	do{
 		tempByte |= (((*ptrCmd8n++ - byteMin)) << bitPos);
 		if(((size == 3)&&((count & 3) == 0))||
-		(size != 3)&&((count & 7) == 0)){
+		((size != 3)&&((count & 7) == 0))){
 			outData->write8(tempByte);
 			//printf("%d:%x ", count, tempByte & 255);
 			tempByte = 0;

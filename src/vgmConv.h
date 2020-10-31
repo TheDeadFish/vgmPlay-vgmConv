@@ -4,20 +4,6 @@
 extern "C" {
 #endif
 
-// windows unicode support
-// native string char
-#ifndef _NCHAR_
-#define _NCHAR_
- #ifdef _UNICODE
-  #include <wchar.h>
-  #define nchar wchar_t
-  #define nstr(x) L##x
- #else
-  #define nchar char
-  #define nstr(x) x
- #endif
-#endif
-
 // vgmConv options
 #define vgmConv_vgmFmt	1
 #define vgmConv_vgcFmt 	2
@@ -37,19 +23,27 @@ extern "C" {
 #define vgmConv_MemErr	7
 #define vgmConv_Undef	-1
 
+// native string char
+#ifdef _WIN32
+	typedef wchar_t vgmConv_char;
+#else
+	typedef char vgmConv_char;
+#endif
+
 // vgmConv interface
 typedef struct
 {
 	unsigned dupRemove;
 	double sscale;
-	nchar* source;
+	vgmConv_char* source;
 	union{
-		nchar* dest;
+		vgmConv_char* dest;
 		char* fileData;};
 	union{
 		int options;
 		int fileSize;};
 }_vgmConv;
+
 int vgmConv(_vgmConv* in_out);
 const char* vgmConv_errStr(int err);
 

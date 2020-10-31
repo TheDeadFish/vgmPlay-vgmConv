@@ -45,7 +45,7 @@ bool VgmConv_Args::getArgs(int argc, nchar *argv[])
 							continue;
 						case 's':{
 							double denomin = 1;
-							_stscanf(argv[i]+2, _T("%lf/%lf"),
+							_stscanf(argv[i]+2, nstr("%lf/%lf"),
 								&sscale, &denomin);
 							sscale /= denomin;
 							continue;}

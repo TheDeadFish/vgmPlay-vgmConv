@@ -126,7 +126,7 @@ bool vgx_fileIo::Write(void* buff, int len)
 	
 	// check for memory write
 	if(maxPos != -1){
-		if(Reserve(curPos + len));
+		if(Reserve(curPos + len))
 		{
 			memcpy(&poit[curPos], buff, len);
 			curPos += len;
@@ -281,6 +281,8 @@ void vgx::Free(void)
 			break;
 		case VGX_VGC_TYPE:
 			delete VgcFile();
+			break;
+		default:
 			break;
 	}
 	status = VGX_UREC_TYPE;

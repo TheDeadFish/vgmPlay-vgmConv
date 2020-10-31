@@ -2,37 +2,22 @@
 #define _XPLATFORM_H_
 
 // native string char
-#include <tchar.h>
-#ifndef _NCHAR_
-#define _NCHAR_
- #ifdef _UNICODE
-  #define nchar wchar_t
-  #define nstr(x) L##x
- #else
-  #define nchar char
-  #define nstr(x) x
- #endif
+#ifdef _WIN32
+ #define nchar wchar_t
+ #define nstr(x) L##x
+#else
+ #define nchar char
+ #define nstr(x) x
 #endif
 
 // native string fopen
-#ifdef _UNICODE
+#ifdef _WIN32
  #define nfopen _wfopen
+ #define _stscanf swscanf
+ #define nmain wmain
 #else
  #define nfopen fopen
-#endif
-
-// native string entry point
-#ifdef _UNICODE
- #ifdef __GNUC__
-  #include <windows.h>
-  #define nmain _nwmain(int argc, nchar* argv[]); \
-  int main(void){ int argc; LPWSTR *argv; \
-	argv = CommandLineToArgvW(GetCommandLineW(), &argc); \
-	return _nwmain(argc, argv);} int _nwmain
- #else
-   #define nmain wmain
- #endif
-#else
+ #define _stscanf sscanf
  #define nmain main
 #endif
 

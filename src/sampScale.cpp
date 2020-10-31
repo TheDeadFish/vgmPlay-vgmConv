@@ -1,7 +1,6 @@
 #include "sampScale.hpp"
 #include <stdio.h>
 #include <stdlib.h>
-#include <windows.h>
 #include <math.h>
 
 SampScale::SampScale(double in)

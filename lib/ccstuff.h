@@ -18,7 +18,7 @@ public:
 	bool resize(size_t size);
 	operator T*();
 	template <class U>
-	operator U();
+	explicit operator U();
 };
 
 // AutoMem: Implementation
