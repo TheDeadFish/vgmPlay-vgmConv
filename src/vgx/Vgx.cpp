@@ -120,6 +120,26 @@ bool vgx_fileIo::Read(void* buff, int len)
 	return true;
 }
 
+int vgx_fileIo::Tell(void)
+{
+	// check for memory write
+	if(maxPos != -1) return curPos;
+#ifdef HAS_ZLIB
+	return gztell(fpz);
+#else
+	return ftell(fp);
+#endif
+}
+
+bool vgx_fileIo::Align(int size)
+{
+	bool ret = true;
+	while(Tell() % size) {
+		ret = Write((void*)"", 1);
+		if(!ret) break; }
+	return ret;
+}
+
 bool vgx_fileIo::Write(void* buff, int len)
 {
 	status = VGX_FILE_OK;

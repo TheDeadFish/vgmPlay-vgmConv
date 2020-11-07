@@ -135,6 +135,8 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 	#define FP_WRITE(data, size){	\
 		if(! fp.Write(data, size))	\
 			return false;}
+	#define FP_ALIGN(){	\
+		if(! fp.Align(2)) return false;}
 	
 	// create header
 	vgx_header head = {};
@@ -156,12 +158,14 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 	curPos += mainSize;
 	
 	// gd3 offset
+	curPos += curPos & 1;
 	if(gd3Data != NULL){
 		head.setGd3(curPos);
 		curPos += gd3Size;
 	}
 	
 	// eof offset
+	curPos += curPos & 1;
 	head.setSize(curPos);
 	
 	// Reserve space in file
@@ -179,8 +183,11 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 	FP_WRITE(mainData, mainSize);
 	
 	// write gd3data to file
+	FP_ALIGN();
 	if(gd3Data != NULL)
 		FP_WRITE(gd3Data, gd3Size);
+	FP_ALIGN();
+	
 	return true;
 }
 

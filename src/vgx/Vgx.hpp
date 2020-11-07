@@ -42,6 +42,9 @@ public:
 	bool Read(void* buff, int len);
 	bool Write(void* buff, int len);
 	
+	int Tell(void);
+	bool Align(int size);
+	
 	// memory functions
 	bool Reserve(int reqSize);
 	char* Release(int& memSize);
