@@ -37,7 +37,7 @@ int VgmFile_::ELen(unsigned char c)
 }
 
 // vgm header
-class vgm_header
+class vgx_header
 {
 public:
 	int magic;
@@ -52,7 +52,7 @@ public:
 	int start;
 	int junk3[2];
 	
-	vgm_header(){
+	vgx_header(){
 		magic = 0x206D6756;
 	}
 	
@@ -110,7 +110,7 @@ bool VgmFile_::Load(vgx_fileIo& fp)
 
 		
 	// Get header of vgm file
-	vgm_header head;
+	vgx_header head;
 	FP_READ(&head.size, sizeof(head) - 4);
 	
 	// Check vgm version number
@@ -121,7 +121,7 @@ bool VgmFile_::Load(vgx_fileIo& fp)
 	int vgmSize = head.getSize();
 	if(! buffer.alloc(vgmSize))
 		ALLOC_ERR();
-	header = (vgm_header*)buffer;
+	header = (vgx_header*)buffer;
 	
 	// Move head to vgm buffer
 	memcpy(header, &head, sizeof(head));
@@ -187,7 +187,7 @@ bool VgmFile_::Save(vgx_fileIo& fp)
 			return false;}
 	
 	// default header for when (header == NULL)
-	vgm_header head;
+	vgx_header head;
 	if(header == NULL)
 	{
 		memset(&head.size, 0, sizeof(head) - 4);

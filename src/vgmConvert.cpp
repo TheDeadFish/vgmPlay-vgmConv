@@ -319,18 +319,12 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 	}
 	
 	// output to file
+	vgmInfo.mainData = outData.getBase();
+	vgmInfo.mainSize = outData.curIndex();
+	
 	if(options & vgcFormat)
 	{
-		vgcFile vgcInfo;
-		vgcInfo.mainData = outData.getBase();
-		vgcInfo.mainSize = outData.curIndex();
-		vgcInfo.loopIndex = vgmInfo.loopIndex;
-		vgcInfo.sampData = vgmInfo.sampData;
-		vgcInfo.sampSize = vgmInfo.sampSize;
-		vgcInfo.gd3Data = vgmInfo.gd3Data;
-		vgcInfo.gd3Size = vgmInfo.gd3Size;
-		vgmInfo.samples = curSamp;
-		vgmInfo.loopSamp = curSamp - loopSamp;
+		vgcFile& vgcInfo = *(vgcFile*)&vgmInfo;
 		if(dest == NULL)
 			fileData = vgcInfo.Save(fileSize);
 		else
@@ -339,8 +333,6 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 	}
 	else
 	{
-		vgmInfo.mainData = outData.getBase();
-		vgmInfo.mainSize = outData.curIndex();
 		if(dest == NULL)
 			fileData = vgmInfo.Save(fileSize);
 		else
