@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "xplatform.h"
+#include "stdshit.h"
 #include "args.hpp"
 #include "ret_codes.h"
 #include "../vgmConv.h"
@@ -19,8 +19,14 @@ int nmain(int argc, nchar *argv[])
 		return return_map(error_badArgs + args.ret_code);
 	}
 	
+	// get romfile name
+	nchar romFile[1024];
+	_tcscpy(romFile, argv[0]);
+	_tcscpy(romFile+getPathLen(romFile), 
+		nstr("vgmPlay.dat"));
+	
 	// convert intput file
-	int ret = vgmConv((_vgmConv*)&args);
+	int ret = vgmRom((_vgmConv*)&args, romFile);
 	if(ret)
 	{
 		if(args.silent == false)

@@ -10,12 +10,9 @@ public:
 	int loop;
 	int gd3;
 	int size;
+	int image;
 	int sampSize;
-	
-	vgc_header(){
-		magic = 0x20636756;
-	}
-	
+		
 	int getStart(void){
 		return SwapEndian(start);}
 		
@@ -140,31 +137,30 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 			return false;}
 	
 	// create header
-	vgc_header head;
+	vgc_header head = {};
+	head.magic = 0x20636756;
 	head.version = 0x00010000;
-	head.setStart(24);
+	head.setStart(sizeof(head)-4);
 	
 	// dac offset
 	int curPos = sizeof(head);
 	if(sampData != NULL){
 		head.setSampSize(sampSize);
 		curPos += sampSize;
-	}else
-		head.setSampSize(0);
+	}
 	
 	// loopPoit offset
 	if(loopIndex != 0xffffffff){
 		head.setLoop(loopIndex + curPos);
-	}else
-		head.setLoop(0);
+	}
 	curPos += mainSize;
 	
 	// gd3 offset
 	if(gd3Data != NULL){
 		head.setGd3(curPos);
 		curPos += gd3Size;
-	}else
-		head.setGd3(0);
+	}
+	
 	// eof offset
 	head.setSize(curPos);
 	
@@ -186,4 +182,11 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 	if(gd3Data != NULL)
 		FP_WRITE(gd3Data, gd3Size);
 	return true;
+}
+
+int vgcFile_setSize(void* ptr, int size)
+{
+	vgc_header* head = (vgc_header*)ptr;
+	int oldSize = head->getSize();
+	head->setSize(size); return oldSize;
 }

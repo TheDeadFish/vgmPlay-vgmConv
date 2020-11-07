@@ -35,6 +35,9 @@ typedef struct
 {
 	unsigned dupRemove;
 	double sscale;
+	vgmConv_char* romName;
+	int romLimit;
+	
 	vgmConv_char* source;
 	union{
 		vgmConv_char* dest;
@@ -46,6 +49,7 @@ typedef struct
 
 int vgmConv(_vgmConv* in_out);
 const char* vgmConv_errStr(int err);
+int vgmRom(_vgmConv* in_out, vgmConv_char* romFile);
 
 #ifdef __cplusplus 
 }

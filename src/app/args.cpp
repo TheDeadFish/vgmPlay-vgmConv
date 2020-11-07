@@ -7,12 +7,9 @@ bool VgmConv_Args::getArgs(int argc, nchar *argv[])
 	static const char* err2 = "No source or destination specified";
 	static const char* err3 = "No source file specified";
 	
-	dest = 0;
-	source = 0;
-	options = 0;
-	silent = false;
+	memset(this, 0, sizeof(*this));
 	sscale = 1;
-	dupRemove = 0;
+	romLimit = 4194304;
 
 	int step = 0;
 	for(int i = 1; i < argc; i++){
@@ -49,6 +46,12 @@ bool VgmConv_Args::getArgs(int argc, nchar *argv[])
 								&sscale, &denomin);
 							sscale /= denomin;
 							continue;}
+						case 'r':
+							romName = argv[i]+2;
+							continue;
+						case 'l':
+							romLimit = _tstoi(argv[i]+2)*1024;
+							continue;
 						case '-':
 							step++;
 							continue;

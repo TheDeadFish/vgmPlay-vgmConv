@@ -16,7 +16,7 @@ if (WIN32)
 endif()
 
 # compile flags
-add_compile_options(-std=gnu++11)
+add_compile_options(-std=gnu++14)
 
 # warnings
 add_compile_options(-Wno-delete-non-virtual-dtor)

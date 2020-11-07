@@ -2,6 +2,7 @@
 // DeadFish Software, 2012
 #ifndef _CCSTUFF_H_
 #define _CCSTUFF_H_
+#include <stdio.h>
 #include <stdlib.h>
 
 // AutoMem
@@ -83,5 +84,22 @@ AutoMem<T>::operator U()
 {
 	return (U)data;
 }
+
+struct CFile
+{
+	FILE* fp;
+	
+	~CFile() { close(); } 
+	CFile(FILE* fp_ = 0) : fp(fp_) {}
+	
+	operator FILE*() { return fp; }
+	
+	
+	void close();
+	size_t fSize();
+	
+	bool read(void* data, size_t size);
+	bool write(const void* data, size_t size);
+};
 
 #endif
