@@ -70,10 +70,26 @@ int removeCrap(nchar* str)
 	return len+1;
 }
 
-int getPathLen(nchar* name)
+int getPathLen(const nchar* name)
 {
 	int pathLen = 0;
 	for(int i = 0; name[i]; i++) {
 		if(isSep(name[i])) pathLen = i+1; }
 	return pathLen;
+}
+
+int strsize(const nchar* str)
+{
+	int len = _tstrlen(str);
+	return (len+1)*sizeof(nchar);
+}
+
+nchar* replName(const nchar* path, const nchar* name)
+{
+	int size = getPathLen(path) * sizeof(nchar);
+	char* buff = (char*)malloc(strsize(name) + size);
+	if(buff) { memcpy(buff, path, size);
+		_tcscpy((nchar*)(buff+size), name); }
+	
+	return (nchar*)buff;
 }

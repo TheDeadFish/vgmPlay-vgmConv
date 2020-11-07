@@ -20,11 +20,9 @@ int nmain(int argc, nchar *argv[])
 	}
 	
 	// get romfile name
-	nchar romFile[1024];
-	_tcscpy(romFile, argv[0]);
-	_tcscpy(romFile+getPathLen(romFile), 
-		nstr("vgmPlay.dat"));
-	
+	nchar* romFile = replName(
+		argv[0], nstr("vgmPlay.dat"));
+
 	// convert intput file
 	int ret = vgmRom((_vgmConv*)&args, romFile);
 	if(ret)

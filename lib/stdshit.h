@@ -1,6 +1,7 @@
 #ifndef _STDSHIT_H_
 #define _STDSHIT_H_
 #include <stdlib.h>
+#include <string.h>
 #include "xplatform.h"
 #include <type_traits>
 
@@ -24,5 +25,11 @@ int removeCrap(nchar* str);
 
 static int bswap32(int x) {
 	return __builtin_bswap32(x); }
+	
+int strsize(const nchar* str);
+
+#define ZINIT memset(this, 0, sizeof(*this))
+
+nchar* replName(const nchar* path, const nchar* name);
 
 #endif

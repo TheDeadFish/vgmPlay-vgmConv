@@ -1,4 +1,5 @@
 #pragma once
+#include "stdshit.h"
 #include "ccstuff.h"
 
 class vgx_header;
@@ -18,6 +19,11 @@ public:
 	int gd3Size;
 	int samples;
 	int loopSamp;
+	
+	char *extraData; 
+	int extraSize;
+	
+	VgxFile_() { ZINIT; }
 };
 
 

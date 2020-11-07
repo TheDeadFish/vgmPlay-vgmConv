@@ -13,6 +13,8 @@ public:
 	T* data;
 	AutoMem();
 	~AutoMem();
+	AutoMem(T* p) : data(p) {}
+	
 	void free(void);
 	T* release(void);
 	bool alloc(size_t size);

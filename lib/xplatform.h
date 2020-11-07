@@ -63,7 +63,7 @@ static bool isSep(int ch) {
   return ch == '/';
 }
 
-int getPathLen(nchar* name);
+int getPathLen(const nchar* name);
 
 
 

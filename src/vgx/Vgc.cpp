@@ -11,6 +11,7 @@ public:
 	int gd3;
 	int size;
 	int image;
+	int extraSize;
 	int sampSize;
 
 	int getStart(void){
@@ -42,6 +43,12 @@ public:
 		
 	void setSampSize(int in){
 		sampSize = SwapEndian(in);}
+		
+	int getExtraSize(void){
+		return SwapEndian(extraSize);}
+		
+	void setExtraSize(int in){
+		extraSize = SwapEndian(in);}
 
 private:
 	static int SwapEndian(int in);
@@ -159,10 +166,14 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 	
 	// gd3 offset
 	curPos += curPos & 1;
-	if(gd3Data != NULL){
+	if(gd3Size){
 		head.setGd3(curPos);
 		curPos += gd3Size;
 	}
+	
+	// extra data
+	head.setExtraSize(gd3Size+extraSize);
+	curPos += extraSize;
 	
 	// eof offset
 	curPos += curPos & 1;
@@ -184,8 +195,8 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 	
 	// write gd3data to file
 	FP_ALIGN();
-	if(gd3Data != NULL)
-		FP_WRITE(gd3Data, gd3Size);
+	FP_WRITE(gd3Data, gd3Size);
+	FP_WRITE(extraData, extraSize);
 	FP_ALIGN();
 	
 	return true;

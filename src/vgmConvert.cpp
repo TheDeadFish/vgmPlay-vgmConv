@@ -8,6 +8,7 @@
 #include <string.h>
 #include <memory>
 #include <new>
+#include "stdshit.h"
 using namespace std;
 
 #define MinInitBlock 16
@@ -321,6 +322,8 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 	// output to file
 	vgmInfo.mainData = outData.getBase();
 	vgmInfo.mainSize = outData.curIndex();
+	vgmInfo.extraData = (char*)romName;
+	vgmInfo.extraSize = strsize(romName);
 	
 	if(options & vgcFormat)
 	{
