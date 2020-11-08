@@ -80,6 +80,7 @@ int getPathLen(const nchar* name)
 
 int strsize(const nchar* str)
 {
+	if(!str) return 0;
 	int len = _tstrlen(str);
 	return (len+1)*sizeof(nchar);
 }
