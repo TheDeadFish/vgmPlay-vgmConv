@@ -125,24 +125,26 @@ int vgx_fileIo::Tell(void)
 	// check for memory write
 	if(maxPos != -1) return curPos;
 #ifdef HAS_ZLIB
-	return gztell(fpz);
-#else
-	return ftell(fp);
+	if(mode != wb)
+		return gztell(fpz);
 #endif
+	return ftell(fp);
 }
 
 bool vgx_fileIo::Align(int size)
 {
-	bool ret = true;
-	while(Tell() % size) {
-		ret = Write((void*)"", 1);
-		if(!ret) break; }
-	return ret;
+	while(1) {
+		int pos = Tell();
+		if(pos == -1) { status = VGX_WRITE_ERR; return false; }
+		if(!(pos % size)) return true;
+		if(!Write((void*)"", 1)) return false;
+	}
 }
 
 bool vgx_fileIo::Write(void* buff, int len)
 {
 	status = VGX_FILE_OK;
+	if(len == 0) return true;
 	
 	// check for memory write
 	if(maxPos != -1){
