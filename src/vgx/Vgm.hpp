@@ -3,18 +3,36 @@
 #ifndef _VGMFILE_H_
 #define _VGMFILE_H_
 #include "dataBlock.hpp"
-#include "vgx_.hpp"
+#include "ccstuff.h"
 
 class vgx_fileIo;
 class vgm_header;
-class VgmFile_ : public VgxFile_
+class VgmFile_
 {
 public:
+	void Free(void);
 	static int ELen(unsigned char c);
 	bool Load(vgx_fileIo& fp);
 	bool Save(vgx_fileIo& fp);
 	
+	AutoMem<char> buffer;
+	vgm_header *header;
+	char *sampData;
+	int sampSize;
+	char *mainData;
+	int mainSize;
+	int loopIndex;
+	char *gd3Data;
+	int gd3Size;
+	int samples;
+	int loopSamp;
 	DataBlock dataBlock;
 };
+
+inline
+void VgmFile_::Free(void)
+{
+	buffer.free();
+}
 
 #endif

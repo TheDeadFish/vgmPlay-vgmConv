@@ -1,7 +1,7 @@
 #include "Vgc.hpp"
 #include "Vgx.hpp"
 
-class vgx_header
+class vgc_header
 {
 public:
 	int magic;
@@ -13,7 +13,7 @@ public:
 	int image;
 	int extraSize;
 	int sampSize;
-
+		
 	int getStart(void){
 		return SwapEndian(start);}
 		
@@ -54,7 +54,7 @@ private:
 	static int SwapEndian(int in);
 };
 
-int vgx_header::SwapEndian(int in)
+int vgc_header::SwapEndian(int in)
 {
 	union{int var;char ary[4];
 	}in1, out;
@@ -74,7 +74,7 @@ bool VgcFile_::Load(vgx_fileIo& fp)
 			return false;}
 	
 	// Get header of vgc file
-	vgx_header head;
+	vgc_header head;
 	FP_READ(&head.version, sizeof(head) - 4);
 	
 	// Check version  number
@@ -91,7 +91,7 @@ bool VgcFile_::Load(vgx_fileIo& fp)
 		fp.AllocErr();
 		return false;
 	}
-	header = (vgx_header*)buffer;
+	header = (vgc_header*)buffer;
 	
 	// Move head to vgc buffer
 	memcpy(header, &head, sizeof(head));
@@ -146,7 +146,7 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 		if(! fp.Align(2)) return false;}
 	
 	// create header
-	vgx_header head = {};
+	vgc_header head = {};
 	head.magic = 0x20636756;
 	head.version = 0x00010000;
 	head.setStart(sizeof(head)-4);
@@ -204,7 +204,7 @@ bool VgcFile_::Save(vgx_fileIo& fp)
 
 int vgcFile_setSize(void* ptr, int size)
 {
-	vgx_header* head = (vgx_header*)ptr;
+	vgc_header* head = (vgc_header*)ptr;
 	int oldSize = head->getSize();
 	head->setSize(size); return oldSize;
 }

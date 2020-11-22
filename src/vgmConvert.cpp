@@ -318,16 +318,23 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 			break;
 		}
 	}
-	
-	// output to file
-	vgmInfo.mainData = outData.getBase();
-	vgmInfo.mainSize = outData.curIndex();
-	vgmInfo.extraData = (char*)romName;
-	vgmInfo.extraSize = strsize(romName);
-	
+
 	if(options & vgcFormat)
 	{
-		vgcFile& vgcInfo = *(vgcFile*)&vgmInfo;
+		vgcFile vgcInfo;
+		vgcInfo.mainData = outData.getBase();
+		vgcInfo.mainSize = outData.curIndex();
+		vgcInfo.loopIndex = vgmInfo.loopIndex;
+		vgcInfo.sampData = vgmInfo.sampData;
+		vgcInfo.sampSize = vgmInfo.sampSize;
+		vgcInfo.gd3Data = vgmInfo.gd3Data;
+		vgcInfo.gd3Size = vgmInfo.gd3Size;
+		vgmInfo.samples = curSamp;
+		vgmInfo.loopSamp = curSamp - loopSamp;
+		
+		vgcInfo.extraData = (char*)romName;
+		vgcInfo.extraSize = strsize(romName);
+
 		if(dest == NULL)
 			fileData = vgcInfo.Save(fileSize);
 		else
@@ -336,6 +343,8 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 	}
 	else
 	{
+		vgmInfo.mainData = outData.getBase();
+		vgmInfo.mainSize = outData.curIndex();
 		if(dest == NULL)
 			fileData = vgmInfo.Save(fileSize);
 		else
