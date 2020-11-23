@@ -31,13 +31,14 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		
 		// begin pass1 Loop
 		for(;;){
+			char* eventPos = vgmPos.next();
+		
+		
 			// Check loop
 			if(vgmPos.loop())
 				SndS.QLoopFound();
 			
-			char* eventPos = vgmPos.next();
 			event = *eventPos;
-
 			switch(event){
 			case 0x50: // PSG Write
 				SndS.InitBlock_Begins(eventPos);
@@ -109,7 +110,9 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		
 		// Begin pass2 Loop
 		for(;;){
-			if(SndS.InitBlock_Ends(vgmPos.curPos, dupRemove))
+			char* eventPos = vgmPos.next();
+
+			if(SndS.InitBlock_Ends(eventPos, dupRemove))
 				Codec.initBlock(curSamp, SndS.PreLoop_Dac, SndS.PreLoop_Seek);
 			
 			if(vgmPos.loop()) {
@@ -124,9 +127,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				}
 			}
 			
-			char* eventPos = vgmPos.next();
 			event = *eventPos;
-			
 			switch(event){
 			case 0x50: // PSG Write
 				Codec.eventWrite(curSamp, EventPSGP, (unsigned char*)eventPos+1);

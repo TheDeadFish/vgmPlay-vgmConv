@@ -289,6 +289,10 @@ VgmPos::VgmPos(VgmFile_& vgmInfo)
 
 char* VgmPos::next(void)
 {
+	atLoop = (curPos == loopPos);
+	
+
+
 	// get event
 	char* ret = curPos;
 	int len = VgmFile_::ELen(*curPos);

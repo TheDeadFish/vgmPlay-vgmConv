@@ -41,11 +41,14 @@ struct VgmPos
 	char* loopPos;
 	int delay;
 	
+	bool atLoop;
+	
+	
 	
 	
 	VgmPos(VgmFile_& vgmInfo);
 	
-	bool loop() { return curPos == loopPos; }
+	bool loop() { return atLoop; }
 
 	char* next();
 };
