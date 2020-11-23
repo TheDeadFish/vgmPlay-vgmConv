@@ -289,8 +289,20 @@ VgmPos::VgmPos(VgmFile_& vgmInfo)
 
 char* VgmPos::next(void)
 {
+	// get event
 	char* ret = curPos;
 	int len = VgmFile_::ELen(*curPos);
 	curPos += len+1;
+	
+	// get delay
+	switch((unsigned char)*ret) {
+	case 0x80 ... 0x8F: delay = (*ret & 15); break;
+	case 0x70 ... 0x7F: delay = (*ret & 15)+1; break;
+	case 0x61: delay = *(unsigned short*)(ret+1); break;
+	case 0x62: delay = 735; break;
+	case 0x63: delay = 882; break;
+	default: delay = 0;
+	}
+
 	return ret;
 }

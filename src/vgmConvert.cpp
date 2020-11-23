@@ -48,21 +48,15 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 			case 0x80 ... 0x8f: // Dac Write
 				SndS.QDacWrite(eventPos);
 				continue;
-			case 0x61:{
-					short delay = *(short*)(eventPos+1);
-					if(delay) SndS.InitBlock_Ends(eventPos);
-					continue;}
-			case 0x70 ... 0x7f:
-			case 0x62 ... 0x63:
-				SndS.InitBlock_Ends(eventPos);
-				continue;
 			case 0xe0:
 				SndS.QDacSeek(eventPos);
 				continue;
 			case 0x66:
 				break;
 			default:
-					continue;
+				if(vgmPos.delay) 
+					SndS.InitBlock_Ends(eventPos);
+				continue;
 			}
 			break;
 		}}
@@ -160,29 +154,23 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 					Codec.Flush(curSamp);
 				}else
 				Codec.dacWrite(curSamp);
-				curSamp += event & 0x0f;
-				continue;
-			case 0x61: // 0x61 nn nn delay	
-				curSamp += *(unsigned short*)(eventPos+1);
-				continue;
-			case 0x62: // 735 delay
-				Codec.Flush(curSamp);
-				curSamp += 735;
-				continue;
-			case 0x63: // 882 delay
-				Codec.Flush(curSamp);
-				curSamp += 882;
-				continue;
-			case 0x70 ... 0x7f: // 0x7n 
-				curSamp += (event & 0x0f) + 1;
-				continue;
+				
+				goto CHECK_DELAY;
+
 				// V1.60 dac stream events
 			case 0x90 ... 0x95:
 				Codec.dsWrite(curSamp, (unsigned char*)eventPos+1);
 				continue;
-			default:{
-					continue;
+
+			default:
+			CHECK_DELAY:
+				if(vgmPos.delay) {
+					if((vgmPos.delay == 735)
+					||(vgmPos.delay == 882))
+						Codec.Flush(curSamp);
+					curSamp += vgmPos.delay;
 				}
+				continue;
 			}
 			break;
 		}

@@ -39,6 +39,7 @@ struct VgmPos
 {
 	char* curPos;
 	char* loopPos;
+	int delay;
 	
 	
 	
