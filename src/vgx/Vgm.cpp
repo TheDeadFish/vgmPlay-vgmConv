@@ -277,3 +277,20 @@ bool VgmFile_::Save(vgx_fileIo& fp)
 		FP_WRITE(gd3Data, gd3Size);
 	return true;
 }
+
+VgmPos::VgmPos(VgmFile_& vgmInfo)
+{
+	curPos = vgmInfo.mainData;
+
+	loopPos = NULL;
+	if(vgmInfo.loopIndex >= 0)
+		loopPos = curPos + vgmInfo.loopIndex;
+}
+
+char* VgmPos::next(void)
+{
+	char* ret = curPos;
+	int len = VgmFile_::ELen(*curPos);
+	curPos += len+1;
+	return ret;
+}

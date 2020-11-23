@@ -12,9 +12,15 @@ void sndState::Init(char *sampBaseIn, int sampSize,
 	PostLoop_WriteBad = false;
 	PostLoop_Seek = (char*)0;
 	PostLoop_Dac = -1;
+	
+	// initblock state
+	loopFound = false;
+	InitState = Pre_InitBlock;
+	InitBlock_Start = NULL;
+	InitBlock_End = NULL;
 }
 
-void sndState::DWrite(int InitState, unsigned char data)
+void sndState::DWrite(unsigned char data)
 {
 	switch(InitState){
 	case PreLoop_InitBlock:
@@ -28,7 +34,7 @@ void sndState::DWrite(int InitState, unsigned char data)
 	}
 }
 
-void sndState::DacWrite(int InitState)
+void sndState::DacWrite()
 {
 	if(dacPos.curPos == (char*)0){
 		if(InitState == PostLoop_InitBlock);
@@ -54,7 +60,7 @@ void sndState::DacWrite(int InitState)
 	}
 }
 
-void sndState::DacSeek(int InitState, unsigned char *data)
+void sndState::DacSeek(unsigned char *data)
 {
 	if(sampBase == (char*)0)
 		return;
@@ -83,5 +89,17 @@ void sndState::DacProc(void)
 			PreLoop_Seek = (char*)0;
 		if(PostLoop_Dac != -1)
 			PreLoop_Dac = -1;
+	}
+}
+
+void sndState::InitBlock_Begins(char* eventPos)
+{
+	if(InitState == Pre_InitBlock) {
+		InitBlock_Start = eventPos;
+		if(loopFound == true){
+			InitState = PostLoop_InitBlock;
+		}else{
+			InitState = PreLoop_InitBlock;
+		}	
 	}
 }

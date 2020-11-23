@@ -15,35 +15,13 @@ using namespace std;
 
 #define InitBlock_Ends(back){\
 		SndS.DacProc(); \
-		InitBlock_End = vgmPos.curPos - back; \
-		InitState = End_InitBlock;}
-
-
-#define InitBlock_Begins(back){\
-		InitBlock_Start = vgmPos.curPos - back; \
-		if(loopFound == true){ \
-			InitState = PostLoop_InitBlock; \
-		}else{ \
-			InitState = PreLoop_InitBlock;  \
-		}}
+		SndS.InitBlock_End = vgmPos.curPos - back; \
+		SndS.InitState = End_InitBlock;}
 
 int VgmConv::vgmConvert(vgmFile& vgmInfo)
 {
 	// Main variables
 	unsigned char event;
-	char *loopIndexP;
-	
-	// pass1 Variables
-	bool loopFound = false;
-	int InitState = Pre_InitBlock;
-	char *InitBlock_Start = NULL;
-	char *InitBlock_End = NULL;
-	
-	// Setup loopIndexP
-	if(vgmInfo.loopIndex != 0xffffffff){
-		loopIndexP = vgmInfo.mainData + vgmInfo.loopIndex;
-	}else
-	loopIndexP = NULL;
 
 	// Sound state setup
 	sndState SndS;
@@ -52,8 +30,8 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 	// pass 1 exception block
 	{
 		jmp_buf jmpBuf;
-		NextGet vgmPos(
-		vgmInfo.mainData, vgmInfo.mainSize,	jmpBuf, 1);
+		VgmPos vgmPos(vgmInfo);
+
 		SndS.Unes.holdList.SetExcp(&jmpBuf, 2);
 		if(int result = setjmp( jmpBuf )) return
 			(result == 2) ? VGX_MEM_ERR : VGX_FILE_BAD;
@@ -61,103 +39,91 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		// begin pass1 Loop
 		for(;;){
 			// Check loop
-			if((loopIndexP != NULL)&&(loopFound == false)){
-				if(vgmPos.curPos > loopIndexP)
-				return VGX_FILE_BAD;
-				if(vgmPos.curPos == loopIndexP){
-					if(InitState == PreLoop_InitBlock)
-					InitState = PostLoop_InitBlock;
-					loopFound = true;
-					SndS.Unes.QLoopFound();
-				}
+			if(vgmPos.loop())
+			{
+				if(SndS.InitState == PreLoop_InitBlock)
+				SndS.InitState = PostLoop_InitBlock;
+				SndS.loopFound = true;
+				SndS.Unes.QLoopFound();
 			}
-			event = vgmPos.Get<char>();
+			
+			char* eventPos = vgmPos.next();
+			event = *eventPos;
+
 			switch(event){
 			case 0x50: // PSG Write
-				if(InitState == Pre_InitBlock)
-				InitBlock_Begins(1);
-				vgmPos.Add(1);
+				SndS.InitBlock_Begins(eventPos);
 				continue;
 			case 0x52: // YM2612 Port0
-				vgmPos.Range(2);
-				if(InitState != End_InitBlock){
-					if(InitState == Pre_InitBlock)
-					InitBlock_Begins(1);
-					if(vgmPos.curPos[0] == 0x2A){
-						SndS.DWrite(InitState, (unsigned char)vgmPos.curPos[1]);
+				if(SndS.InitState != End_InitBlock){
+					SndS.InitBlock_Begins(eventPos);
+					if(eventPos[1] == 0x2A){
+						SndS.DWrite((unsigned char)eventPos[2]);
 					}else{
-						SndS.Unes.QWrite(0, (unsigned char*)vgmPos.curPos);
+						SndS.Unes.QWrite(0, (unsigned char*)eventPos+1);
 					}
 				}else{
-					SndS.Unes.QWrite(0, (unsigned char*)vgmPos.curPos);
+					SndS.Unes.QWrite(0, (unsigned char*)eventPos+1);
 				}
-				vgmPos.Add(2);
 				continue;
 			case 0x53: // YM2612 Port0
-				if(InitState == Pre_InitBlock)
-				InitBlock_Begins(1);
-				vgmPos.Range(2);
-				SndS.Unes.QWrite(1, (unsigned char*)vgmPos.curPos);
-				vgmPos.Add(2);
+				SndS.InitBlock_Begins(eventPos);
+				SndS.Unes.QWrite(1, (unsigned char*)eventPos+1);
 				continue;
 			case 0x80 ... 0x8f: // Dac Write
-				if(InitState != End_InitBlock){
-					if(InitState == Pre_InitBlock)
-					InitBlock_Begins(0);
+				if(SndS.InitState != End_InitBlock){
+					SndS.InitBlock_Begins(eventPos);
 					if(event > 0x80)
 					InitBlock_Ends(0);
 				}	
 				continue;
 			case 0x61:{
-					short delay = vgmPos.Get<short>();
-					if((InitState != End_InitBlock)&&(InitState != Pre_InitBlock)&&(delay != 0))
+					short delay = *(short*)(eventPos+1);
+					if((SndS.InitState != End_InitBlock)&&(SndS.InitState != Pre_InitBlock)&&(delay != 0))
 					InitBlock_Ends(3);
 					continue;}
 			case 0x70 ... 0x7f:
 			case 0x62 ... 0x63:
-				if((InitState != End_InitBlock)&&(InitState != Pre_InitBlock))
+				if((SndS.InitState != End_InitBlock)&&(SndS.InitState != Pre_InitBlock))
 				InitBlock_Ends(1);
 				continue;
 			case 0xe0:
-				if(InitState != End_InitBlock){
-					vgmPos.Range(4);
-					SndS.DacSeek(InitState, (unsigned char*)vgmPos.curPos);
+				if(SndS.InitState != End_InitBlock){
+					SndS.DacSeek((unsigned char*)eventPos+1);
 				}
-				vgmPos.Add(4);
 				continue;
 			case 0x66:
 				break;
-			default:{
-					int tmp = vgmInfo.ELen(event);
-					if(tmp == -1)
-					return VGX_FILE_BAD;
-					vgmPos.Add(tmp);
-					continue;}
+			default:
+					continue;
 			}
 			break;
 		}}
+		
+	printf("%X, %X\n", SndS.InitBlock_Start-vgmInfo.mainData, 
+		SndS.InitBlock_End-vgmInfo.mainData);
+		
 	
 	
 	// Check initBlock bounds and initBlock option
 	bool Write_Dacs;
 	int init_dupRemove = dupRemove;
-	if((InitBlock_Start != NULL)&&(InitBlock_End != NULL)&&
-			(InitBlock_End - InitBlock_Start >= MinInitBlock)&&
+	if((SndS.InitBlock_Start != NULL)&&(SndS.InitBlock_End != NULL)&&
+			(SndS.InitBlock_End - SndS.InitBlock_Start >= MinInitBlock)&&
 			(options & writeInitB)){
-		InitState = Pre_InitBlock;
+		SndS.InitState = Pre_InitBlock;
 		Write_Dacs = false;
 		if(init_dupRemove == 0)
 			init_dupRemove = 1;
 	}else{
-		InitState = End_InitBlock;
+		SndS.InitState = End_InitBlock;
 		Write_Dacs = true;
 	}	
 	
 	// pass2 variables
 	SampScale curSamp(sscale);
 	int loopSamp = 0;
-	NxtGet vgmPos;
-	vgmPos = NxtGet(vgmInfo.mainData);
+	VgmPos vgmPos(vgmInfo);
 	SndS.Unes.Init(init_dupRemove);
 	MemWrite outData;
 	
@@ -199,8 +165,8 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		
 		// Begin pass2 Loop
 		for(;;){
-			if(InitState != End_InitBlock){
-				if(vgmPos.curPos == InitBlock_Start){
+			if(SndS.InitState != End_InitBlock){
+				if(vgmPos.curPos == SndS.InitBlock_Start){
 					unsigned char data[5];
 					if(SndS.PreLoop_Dac != -1){
 						data[0] = 0x2A;
@@ -211,23 +177,24 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 						*(long*)data = SndS.PreLoop_Seek - vgmInfo.sampData;
 						Codec.eventWrite(curSamp, EventSEEK, &data[0]);
 					}
-					InitState = PreLoop_InitBlock;
+					SndS.InitState = PreLoop_InitBlock;
 				}
-				if(vgmPos.curPos == InitBlock_End){
-					InitState = End_InitBlock;
+				if(vgmPos.curPos == SndS.InitBlock_End){
+					SndS.InitState = End_InitBlock;
 					Write_Dacs = true;
 					SndS.Unes.SetMode(dupRemove);
 				}
 			}
-			if((loopFound == true)&&(vgmPos.curPos == loopIndexP)){
+			
+			if(vgmPos.loop()) {
 				loopSamp = curSamp;
 				Codec.Flush(curSamp);
 				vgmInfo.loopIndex = outData.curIndex();
-				loopFound = false;
+				SndS.loopFound = false;
 				SndS.Unes.LoopFound();
 				
 				// Deal with initBlock
-				if(InitState == PreLoop_InitBlock){
+				if(SndS.InitState == PreLoop_InitBlock){
 					if(SndS.PostLoop_WriteBad == false){
 						unsigned char data[5];
 						if(SndS.PostLoop_Dac != -1){
@@ -241,7 +208,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 						}
 					}else
 					Write_Dacs = true;
-					InitState = PostLoop_InitBlock;
+					SndS.InitState = PostLoop_InitBlock;
 				}
 			}
 			
@@ -280,7 +247,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				Codec.Flush(curSamp);
 				break;
 			case 0x80 ... 0x8f: // Dac Write
-				if(InitState != 0){	
+				if(SndS.InitState != 0){	
 					if(Write_Dacs)
 					Codec.dacWrite(curSamp);
 					Codec.Flush(curSamp);

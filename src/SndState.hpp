@@ -22,9 +22,9 @@ public:
 	ym2612Unes Unes;
 	
 	// dac functions
-	void DWrite(int InitState, unsigned char data);
-	void DacWrite(int InitState);
-	void DacSeek(int InitState, unsigned char *data);
+	void DWrite(unsigned char data);
+	void DacWrite();
+	void DacSeek(unsigned char *data);
 	void DacProc(void);
 	// dac data
 	char *sampBase;
@@ -34,6 +34,20 @@ public:
 	bool PostLoop_WriteBad;
 	char *PostLoop_Seek;
 	short PostLoop_Dac;
+	
+	// initblock state
+	bool loopFound;
+	int InitState;
+	char *InitBlock_Start;
+	char *InitBlock_End;
+	
+	// initblock functions
+	void InitBlock_Begins(char* eventPos);
+	
+	
+	
+	
+	
 };
 
 #endif
