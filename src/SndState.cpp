@@ -1,5 +1,7 @@
 #include "SndState.hpp"
 
+#define MinInitBlock 16
+
 void sndState::Init(char *sampBaseIn, int sampSize,
 	int ym2612Unes_mode)
 {
@@ -153,4 +155,55 @@ void sndState::QDacSeek(char* eventPos)
 		InitBlock_Begins(eventPos);
 		DacSeek((unsigned char*)eventPos+1);
 	}
+}
+
+void sndState::Init2(int dupRemove, int wrInitB)
+{
+	// Check initBlock bounds and initBlock option
+	int init_dupRemove = dupRemove;
+	if((InitBlock_Start != NULL)&&(InitBlock_End != NULL)&&
+			(InitBlock_End - InitBlock_Start >= MinInitBlock)&&
+			(wrInitB)){
+		InitState = Pre_InitBlock;
+		Write_Dacs = false;
+		if(init_dupRemove == 0)
+			init_dupRemove = 1;
+	}else{
+		InitState = End_InitBlock;
+		Write_Dacs = true;
+	}	
+	
+	Unes.Init(init_dupRemove);
+}
+
+bool sndState::InitBlock_Ends(char* eventPos, int dupRemove)
+{
+	bool writeDac = false;
+
+	if(InitState != End_InitBlock){
+		if(eventPos == InitBlock_Start){
+			InitState = PreLoop_InitBlock;
+			writeDac = true;
+		}
+		if(eventPos == InitBlock_End){
+			InitState = End_InitBlock;
+			Write_Dacs = true;
+			Unes.SetMode(dupRemove);
+		}
+	}
+	
+	return writeDac;
+}
+
+bool sndState::LoopFound(void)
+{
+	Unes.LoopFound();
+
+	if(InitState == PreLoop_InitBlock){
+		InitState = PostLoop_InitBlock;
+		if(!PostLoop_WriteBad) return true;
+		Write_Dacs = true;
+	}
+	
+	return false;
 }

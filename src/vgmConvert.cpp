@@ -11,8 +11,6 @@
 #include "stdshit.h"
 using namespace std;
 
-#define MinInitBlock 16
-
 int VgmConv::vgmConvert(vgmFile& vgmInfo)
 {
 	// Main variables
@@ -74,29 +72,12 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		
 	printf("%X, %X\n", SndS.InitBlock_Start-vgmInfo.mainData, 
 		SndS.InitBlock_End-vgmInfo.mainData);
-		
-	
-	
-	// Check initBlock bounds and initBlock option
-	bool Write_Dacs;
-	int init_dupRemove = dupRemove;
-	if((SndS.InitBlock_Start != NULL)&&(SndS.InitBlock_End != NULL)&&
-			(SndS.InitBlock_End - SndS.InitBlock_Start >= MinInitBlock)&&
-			(options & writeInitB)){
-		SndS.InitState = Pre_InitBlock;
-		Write_Dacs = false;
-		if(init_dupRemove == 0)
-			init_dupRemove = 1;
-	}else{
-		SndS.InitState = End_InitBlock;
-		Write_Dacs = true;
-	}	
 	
 	// pass2 variables
 	SampScale curSamp(sscale);
 	int loopSamp = 0;
 	VgmPos vgmPos(vgmInfo);
-	SndS.Unes.Init(init_dupRemove);
+	SndS.Init2(dupRemove, options & writeInitB);
 	MemWrite outData;
 	
 	// V1.60 dac stream filter
@@ -137,33 +118,18 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		
 		// Begin pass2 Loop
 		for(;;){
-			if(SndS.InitState != End_InitBlock){
-				if(vgmPos.curPos == SndS.InitBlock_Start){
-					Codec.initBlock(curSamp, SndS.PreLoop_Dac, SndS.PreLoop_Seek);
-					SndS.InitState = PreLoop_InitBlock;
-				}
-				if(vgmPos.curPos == SndS.InitBlock_End){
-					SndS.InitState = End_InitBlock;
-					Write_Dacs = true;
-					SndS.Unes.SetMode(dupRemove);
-				}
-			}
+			if(SndS.InitBlock_Ends(vgmPos.curPos, dupRemove))
+				Codec.initBlock(curSamp, SndS.PreLoop_Dac, SndS.PreLoop_Seek);
 			
 			if(vgmPos.loop()) {
 				loopSamp = curSamp;
 				Codec.Flush(curSamp);
 				vgmInfo.loopIndex = outData.curIndex();
-				SndS.Unes.LoopFound();
-				
+
 				// Deal with initBlock
-				if(SndS.InitState == PreLoop_InitBlock){
-					if(SndS.PostLoop_WriteBad == false){
-						Codec.initBlock(curSamp, 
-							SndS.PostLoop_Dac, SndS.PostLoop_Seek);
-							
-					}else
-					Write_Dacs = true;
-					SndS.InitState = PostLoop_InitBlock;
+				if(SndS.LoopFound()) {
+					Codec.initBlock(curSamp, 
+						SndS.PostLoop_Dac, SndS.PostLoop_Seek);
 				}
 			}
 			
@@ -175,7 +141,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				continue;
 			case 0x52:{ // YM2612 Port0
 					if(vgmPos.curPos[0] == 0x2A){
-						if(Write_Dacs)
+						if(SndS.Write_Dacs)
 							Codec.eventWrite(curSamp, EventYMP0, (unsigned char*)vgmPos.curPos);
 					}else{ 
 						if(SndS.Unes.Write(0, (unsigned char*)vgmPos.curPos))
@@ -189,7 +155,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				vgmPos.Add(2);
 				continue;
 			case 0xe0: // Dac seek
-				if(Write_Dacs)
+				if(SndS.Write_Dacs)
 				Codec.eventWrite(curSamp, EventSEEK, (unsigned char*)vgmPos.curPos);
 				vgmPos.Add(4);
 				continue;
@@ -203,7 +169,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				break;
 			case 0x80 ... 0x8f: // Dac Write
 				if(SndS.InitState != 0){	
-					if(Write_Dacs)
+					if(SndS.Write_Dacs)
 					Codec.dacWrite(curSamp);
 					Codec.Flush(curSamp);
 				}else

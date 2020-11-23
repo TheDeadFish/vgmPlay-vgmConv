@@ -50,6 +50,13 @@ public:
 	void QWrite(int port, char* eventPos);
 	void QDacWrite(char* eventPos);
 	void QDacSeek(char* eventPos);
+	
+	bool Write_Dacs;
+	void Init2(int dupRemove, int wrInitB);
+	bool LoopFound(void);
+	bool InitBlock_Ends(char* eventPos, int dupRemove);
+	
+	
 };
 
 #endif
