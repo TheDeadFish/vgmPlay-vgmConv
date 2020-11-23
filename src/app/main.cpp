@@ -6,9 +6,30 @@
 #include "ret_codes.h"
 #include "../vgmConv.h"
 
+void print_help()
+{
+	printf("vgmConv: [options] <dest> <source>\n");
+	printf("  -v: output format: vgm\n");
+	printf("  -c: output format: vgc (default)\n");
+	printf("  -dN: duplicate write removal mode\n");
+	printf("  -i: init block enable\n");
+	printf("  -z: vgz compression output\n");
+	printf("  -q: quiet\n");
+	printf("  -a: dac sample averge mode\n");
+	printf("  -sN/D: rate scaling\n");
+	printf("  -rSTR: rombuilder mode (STR optional)\n");
+	printf("  -lN: rom size limit in kb (default: 4096)\n");
+	printf("\nduplicate write remove modes\n");
+	printf("  0: none (default)\n  1: safe\n  2: emulator\n  3: hardware\n");
+}
+
 int nmain(int argc, nchar *argv[])
 {
 	clock_t Time = clock();
+	
+	if(argc < 2) { 
+		print_help(); 
+		return 1; }
 	
 	// process arguments
 	VgmConv_Args args;
