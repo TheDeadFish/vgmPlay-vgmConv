@@ -42,11 +42,8 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 			case 0x50: // PSG Write
 				SndS.InitBlock_Begins(eventPos);
 				continue;
-			case 0x52: // YM2612 Port0
-				SndS.QWrite(0, eventPos);
-				continue;
-			case 0x53: // YM2612 Port0
-				SndS.QWrite(1, eventPos);
+			case 0x52: case 0x53: // YM2612
+				SndS.QWrite(event & 1, eventPos);
 				continue;
 			case 0x80 ... 0x8f: // Dac Write
 				SndS.QDacWrite(eventPos);
@@ -133,38 +130,27 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				}
 			}
 			
-			event = vgmPos.Get<char>();
+			char* eventPos = vgmPos.next();
+			event = *eventPos;
+			
 			switch(event){
 			case 0x50: // PSG Write
-				Codec.eventWrite(curSamp, EventPSGP, (unsigned char*)vgmPos.curPos);
-				vgmPos.Add(1);
+				Codec.eventWrite(curSamp, EventPSGP, (unsigned char*)eventPos+1);
 				continue;
-			case 0x52:{ // YM2612 Port0
-					if(vgmPos.curPos[0] == 0x2A){
-						if(SndS.Write_Dacs)
-							Codec.eventWrite(curSamp, EventYMP0, (unsigned char*)vgmPos.curPos);
-					}else{ 
-						if(SndS.Unes.Write(0, (unsigned char*)vgmPos.curPos))
-							Codec.eventWrite(curSamp, EventYMP0, (unsigned char*)vgmPos.curPos);
-					}
-					vgmPos.Add(2);
+			case 0x52: case 0x53: { // YM2612
+					int port = event & 1;
+					if(SndS.Write(port, eventPos))
+						Codec.eventWrite(curSamp, EventYMP0+port, (unsigned char*)eventPos+1);
 					continue;}
-			case 0x53: // YM2612 Port1
-				if(SndS.Unes.Write(1, (unsigned char*)vgmPos.curPos))
-					Codec.eventWrite(curSamp, EventYMP1, (unsigned char*)vgmPos.curPos);
-				vgmPos.Add(2);
-				continue;
 			case 0xe0: // Dac seek
 				if(SndS.Write_Dacs)
-				Codec.eventWrite(curSamp, EventSEEK, (unsigned char*)vgmPos.curPos);
-				vgmPos.Add(4);
+				Codec.eventWrite(curSamp, EventSEEK, (unsigned char*)eventPos+1);
 				continue;
 			case 0x4f: // Psg Stereo
-				Codec.eventWrite(curSamp, EventPSGS, (unsigned char*)vgmPos.curPos);
-				vgmPos.Add(1);
+				Codec.eventWrite(curSamp, EventPSGS, (unsigned char*)eventPos+1);
 				continue;
 			case 0x66: // Vgm end
-				Codec.eventWrite(curSamp, Event_END, (unsigned char*)vgmPos.curPos);
+				Codec.eventWrite(curSamp, Event_END, (unsigned char*)eventPos+1);
 				Codec.Flush(curSamp);
 				break;
 			case 0x80 ... 0x8f: // Dac Write
@@ -177,7 +163,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				curSamp += event & 0x0f;
 				continue;
 			case 0x61: // 0x61 nn nn delay	
-				curSamp += vgmPos.Get<unsigned short>();
+				curSamp += *(unsigned short*)(eventPos+1);
 				continue;
 			case 0x62: // 735 delay
 				Codec.Flush(curSamp);
@@ -192,14 +178,9 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				continue;
 				// V1.60 dac stream events
 			case 0x90 ... 0x95:
-				Codec.dsWrite(curSamp, (unsigned char*)vgmPos.curPos);
-				vgmPos.Add( vgmInfo.ELen(event) );
+				Codec.dsWrite(curSamp, (unsigned char*)eventPos+1);
 				continue;
-			default:{	
-					int tmp = vgmInfo.ELen(event);
-					if(tmp == -1)
-					return VGX_FILE_BAD;
-					vgmPos.Add(tmp);
+			default:{
 					continue;
 				}
 			}

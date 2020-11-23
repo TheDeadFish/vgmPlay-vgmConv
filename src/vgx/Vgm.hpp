@@ -44,13 +44,6 @@ struct VgmPos
 	
 	VgmPos(VgmFile_& vgmInfo);
 	
-	template <class T>
-	T Get() { T ret = *(T*)curPos;
-		curPos += sizeof(T); return ret; }
-	
-	void Add(int x) { curPos += x; }
-	
-	
 	bool loop() { return curPos == loopPos; }
 
 	char* next();

@@ -207,3 +207,10 @@ bool sndState::LoopFound(void)
 	
 	return false;
 }
+
+bool sndState::Write(int port, char* eventPos)
+{
+	if(!port && eventPos[1] == 0x2A)
+		return Write_Dacs;
+	return Unes.Write(port, (unsigned char*)eventPos+1);
+}

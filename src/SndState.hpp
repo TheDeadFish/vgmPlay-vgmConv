@@ -55,6 +55,8 @@ public:
 	void Init2(int dupRemove, int wrInitB);
 	bool LoopFound(void);
 	bool InitBlock_Ends(char* eventPos, int dupRemove);
+	bool Write(int port, char* eventPos);
+	
 	
 	
 };
