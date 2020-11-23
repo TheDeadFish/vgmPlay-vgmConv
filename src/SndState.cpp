@@ -145,3 +145,12 @@ void sndState::QDacWrite(char* eventPos)
 			InitBlock_Ends(eventPos+1);
 	}
 }
+
+
+void sndState::QDacSeek(char* eventPos)
+{
+	if(InitState != End_InitBlock){
+		InitBlock_Begins(eventPos);
+		DacSeek((unsigned char*)eventPos+1);
+	}
+}

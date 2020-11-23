@@ -83,3 +83,21 @@ bool dacStream::dsWrite(int targetSamp, unsigned char *data)
 	}
 	return false;
 }
+
+
+void dacStream::initBlock(int targetSamp, int dac, char* seek)
+{
+	unsigned char data[4];
+
+	if(dac >= 0) {
+		data[0] = 0x2A; data[1] = dac;
+		eventWrite(targetSamp, EventYMP0, data);
+		codec::Flush(targetSamp);
+	}
+	
+	if(seek != NULL) {
+		*(long*)data = seek - vgmInfo->sampData;
+		eventWrite(targetSamp, EventSEEK, data);		
+		codec::Flush(targetSamp);
+	}
+}

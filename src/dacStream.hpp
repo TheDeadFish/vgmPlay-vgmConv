@@ -26,6 +26,15 @@ public:
 	bool dsWrite(int targetSamp, unsigned char *data);
 	bool start(int targetSamp, int blockId,
 		int seekPos, int mode, int length);
+		
+	// initblock
+	void initBlock(int curSamp, int dac, char* seek);
+	
+	
+	
+	
+	
+	
 };
 
 #endif

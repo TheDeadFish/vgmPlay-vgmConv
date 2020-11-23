@@ -49,6 +49,7 @@ public:
 	void QLoopFound(void);
 	void QWrite(int port, char* eventPos);
 	void QDacWrite(char* eventPos);
+	void QDacSeek(char* eventPos);
 };
 
 #endif

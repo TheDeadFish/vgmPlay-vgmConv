@@ -62,9 +62,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				SndS.InitBlock_Ends(eventPos);
 				continue;
 			case 0xe0:
-				if(SndS.InitState != End_InitBlock){
-					SndS.DacSeek((unsigned char*)eventPos+1);
-				}
+				SndS.QDacSeek(eventPos);
 				continue;
 			case 0x66:
 				break;
@@ -141,16 +139,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		for(;;){
 			if(SndS.InitState != End_InitBlock){
 				if(vgmPos.curPos == SndS.InitBlock_Start){
-					unsigned char data[5];
-					if(SndS.PreLoop_Dac != -1){
-						data[0] = 0x2A;
-						data[1] = SndS.PreLoop_Dac;
-						Codec.eventWrite(curSamp, EventYMP0, &data[0]);
-					}
-					if(SndS.PreLoop_Seek != (char*)0){
-						*(long*)data = SndS.PreLoop_Seek - vgmInfo.sampData;
-						Codec.eventWrite(curSamp, EventSEEK, &data[0]);
-					}
+					Codec.initBlock(curSamp, SndS.PreLoop_Dac, SndS.PreLoop_Seek);
 					SndS.InitState = PreLoop_InitBlock;
 				}
 				if(vgmPos.curPos == SndS.InitBlock_End){
@@ -164,22 +153,14 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				loopSamp = curSamp;
 				Codec.Flush(curSamp);
 				vgmInfo.loopIndex = outData.curIndex();
-				SndS.loopFound = false;
 				SndS.Unes.LoopFound();
 				
 				// Deal with initBlock
 				if(SndS.InitState == PreLoop_InitBlock){
 					if(SndS.PostLoop_WriteBad == false){
-						unsigned char data[5];
-						if(SndS.PostLoop_Dac != -1){
-							data[0] = 0x2A;
-							data[1] = SndS.PostLoop_Dac;
-							Codec.eventWrite(curSamp, EventYMP0, &data[0]);
-						}
-						if(SndS.PostLoop_Seek != (char*)0){
-							*(long*)data = SndS.PostLoop_Seek - vgmInfo.sampData;
-							Codec.eventWrite(curSamp, EventSEEK, &data[0]);
-						}
+						Codec.initBlock(curSamp, 
+							SndS.PostLoop_Dac, SndS.PostLoop_Seek);
+							
 					}else
 					Write_Dacs = true;
 					SndS.InitState = PostLoop_InitBlock;
