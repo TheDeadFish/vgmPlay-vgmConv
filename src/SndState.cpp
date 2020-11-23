@@ -103,3 +103,45 @@ void sndState::InitBlock_Begins(char* eventPos)
 		}	
 	}
 }
+
+void sndState::InitBlock_Ends(char* eventPos)
+{
+	if((InitState != End_InitBlock)
+	&&(InitState != Pre_InitBlock))
+	{
+		DacProc();
+		InitBlock_End = eventPos;
+		InitState = End_InitBlock;	
+	}
+}
+
+void sndState::QLoopFound(void)
+{
+	if(InitState == PreLoop_InitBlock)
+		InitState = PostLoop_InitBlock;
+	loopFound = true;
+	Unes.QLoopFound();
+}
+
+void sndState::QWrite(int port, char* eventPos)
+{
+	if(InitState != End_InitBlock){
+		InitBlock_Begins(eventPos);
+		if(!port && (eventPos[1] == 0x2A)){
+			DWrite((unsigned char)eventPos[2]);
+		}else{
+			Unes.QWrite(port, (unsigned char*)eventPos+1);
+		}
+	}else{
+		Unes.QWrite(port, (unsigned char*)eventPos+1);
+	}
+}
+
+void sndState::QDacWrite(char* eventPos)
+{
+	if(InitState != End_InitBlock){
+		InitBlock_Begins(eventPos);
+		if(*eventPos != (char)0x80) 
+			InitBlock_Ends(eventPos+1);
+	}
+}

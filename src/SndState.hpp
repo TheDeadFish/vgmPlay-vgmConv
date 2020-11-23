@@ -43,11 +43,12 @@ public:
 	
 	// initblock functions
 	void InitBlock_Begins(char* eventPos);
+	void InitBlock_Ends(char* eventPos);
 	
 	
-	
-	
-	
+	void QLoopFound(void);
+	void QWrite(int port, char* eventPos);
+	void QDacWrite(char* eventPos);
 };
 
 #endif

@@ -13,11 +13,6 @@ using namespace std;
 
 #define MinInitBlock 16
 
-#define InitBlock_Ends(back){\
-		SndS.DacProc(); \
-		SndS.InitBlock_End = vgmPos.curPos - back; \
-		SndS.InitState = End_InitBlock;}
-
 int VgmConv::vgmConvert(vgmFile& vgmInfo)
 {
 	// Main variables
@@ -40,12 +35,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		for(;;){
 			// Check loop
 			if(vgmPos.loop())
-			{
-				if(SndS.InitState == PreLoop_InitBlock)
-				SndS.InitState = PostLoop_InitBlock;
-				SndS.loopFound = true;
-				SndS.Unes.QLoopFound();
-			}
+				SndS.QLoopFound();
 			
 			char* eventPos = vgmPos.next();
 			event = *eventPos;
@@ -55,37 +45,21 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 				SndS.InitBlock_Begins(eventPos);
 				continue;
 			case 0x52: // YM2612 Port0
-				if(SndS.InitState != End_InitBlock){
-					SndS.InitBlock_Begins(eventPos);
-					if(eventPos[1] == 0x2A){
-						SndS.DWrite((unsigned char)eventPos[2]);
-					}else{
-						SndS.Unes.QWrite(0, (unsigned char*)eventPos+1);
-					}
-				}else{
-					SndS.Unes.QWrite(0, (unsigned char*)eventPos+1);
-				}
+				SndS.QWrite(0, eventPos);
 				continue;
 			case 0x53: // YM2612 Port0
-				SndS.InitBlock_Begins(eventPos);
-				SndS.Unes.QWrite(1, (unsigned char*)eventPos+1);
+				SndS.QWrite(1, eventPos);
 				continue;
 			case 0x80 ... 0x8f: // Dac Write
-				if(SndS.InitState != End_InitBlock){
-					SndS.InitBlock_Begins(eventPos);
-					if(event > 0x80)
-					InitBlock_Ends(0);
-				}	
+				SndS.QDacWrite(eventPos);
 				continue;
 			case 0x61:{
 					short delay = *(short*)(eventPos+1);
-					if((SndS.InitState != End_InitBlock)&&(SndS.InitState != Pre_InitBlock)&&(delay != 0))
-					InitBlock_Ends(3);
+					if(delay) SndS.InitBlock_Ends(eventPos);
 					continue;}
 			case 0x70 ... 0x7f:
 			case 0x62 ... 0x63:
-				if((SndS.InitState != End_InitBlock)&&(SndS.InitState != Pre_InitBlock))
-				InitBlock_Ends(1);
+				SndS.InitBlock_Ends(eventPos);
 				continue;
 			case 0xe0:
 				if(SndS.InitState != End_InitBlock){
