@@ -1,6 +1,17 @@
 #include "stdshit.h"
 #include "vgmConv.hpp"
 #include "MemWrite.hpp"
+#include <math.h>
+
+
+inline void mdcode_setInt(char* romData, int value, int offset) {
+	*(uint*)(romData+offset) = bswap32(value); }
+inline void mdcode_setRepLoop(char* romData, int value) {
+	mdcode_setInt(romData, value, 8); }
+inline void mdcode_setPause(char* romData, int value) {
+	mdcode_setInt(romData, lrintf(value/71.4), 12); }
+inline void mdcode_setUiFlags(char* romData, int value) {
+	romData[16] = value; }
 
 int vgcFile_setSize(void* ptr, int size);
 
@@ -126,6 +137,10 @@ int VgmRom::build(nchar* romFile)
 	rom_data.data = load_file(romFile, rom_size);
 	if(!rom_data) { fileError(romFile);
 		return vgmConv_srcErr; }
+	
+	// setup options
+	mdcode_setRepLoop(rom_data, in_out->repLoop);
+	mdcode_setPause(rom_data, in_out->msPause);
 
 	// read m3u file
 	int ret = load_m3u(in_out->source);

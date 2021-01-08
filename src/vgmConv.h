@@ -37,6 +37,8 @@ typedef struct
 	double sscale;
 	vgmConv_char* romName;
 	int romLimit;
+	int msPause;
+	int repLoop;
 	
 	vgmConv_char* source;
 	union{

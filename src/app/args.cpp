@@ -10,6 +10,8 @@ bool VgmConv_Args::getArgs(int argc, nchar *argv[])
 	memset(this, 0, sizeof(*this));
 	sscale = 1;
 	romLimit = 4194304;
+	repLoop = 3;
+	msPause = 750;
 
 	int step = 0;
 	for(int i = 1; i < argc; i++){
@@ -51,6 +53,12 @@ bool VgmConv_Args::getArgs(int argc, nchar *argv[])
 							continue;
 						case 'l':
 							romLimit = _tstoi(argv[i]+2)*1024;
+							continue;
+						case 'e':
+							repLoop = _tstoi(argv[i]+2);
+							continue;
+						case 'p':
+							msPause = _tstoi(argv[i]+2);
 							continue;
 						case '-':
 							step++;
