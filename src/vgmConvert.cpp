@@ -9,6 +9,8 @@
 #include <memory>
 #include <new>
 #include "stdshit.h"
+#include "vgx/vgmEvent.hpp"
+
 using namespace std;
 
 #define MinInitBlock 16
@@ -27,8 +29,41 @@ using namespace std;
 			InitState = PreLoop_InitBlock;  \
 		}}
 
+void vgmEvents_dedup(VgmEvents& events);
+
 int VgmConv::vgmConvert(vgmFile& vgmInfo)
 {
+	printf("hello\n");
+
+
+	VgmEvents events;
+	if(!events.init(vgmInfo)) {
+		fatal_error("sdfsdf");
+		
+		
+		
+	
+	
+	}
+	
+	vgmEvents_dedup(events);
+	
+#if 0
+		int initBlockSample = -1;
+	
+		for(auto& event : events) {
+			printf("%d: %X, %X, %X\n", event.sample, event.data[0], event.data[1], event.data[2], event.data[0]);
+			if(initBlockSample < 0) {
+				if(event.data) initBlockSample = event.sample; }
+			else if(initBlockSample < event.sample)
+				break;
+		}
+		printf("hello2\n");
+#endif
+	
+
+#if 0
+
 	// Main variables
 	unsigned char event;
 	char *loopIndexP;
@@ -153,12 +188,16 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 		Write_Dacs = true;
 	}	
 	
+#endif
+
 	// pass2 variables
-	SampScale curSamp(sscale);
+	//SampScale curSamp(sscale);
 	int loopSamp = 0;
 	NxtGet vgmPos;
 	vgmPos = NxtGet(vgmInfo.mainData);
+#if 0
 	SndS.Unes.Init(init_dupRemove);
+#endif
 	MemWrite outData;
 	
 	// V1.60 dac stream filter
@@ -189,6 +228,53 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 	Codec.EC = EC.get();
 	Codec.DC = DC.get();
 	Codec.Init(&outData);
+	
+	
+	int curSamp;
+	
+	for(auto& event : events)
+	{
+		curSamp = event.sample;
+	
+		if(&event == events.loopPos) {
+			loopSamp = curSamp;
+			Codec.Flush(curSamp);
+			vgmInfo.loopIndex = outData.curIndex();
+		}
+		
+		if(event == NULL)
+			continue;
+	
+		switch(event[0])
+		{
+		case 0x50:
+			Codec.eventWrite(curSamp, EventPSGP, event.data+1);
+			continue;
+		case 0x52:
+			Codec.eventWrite(curSamp, EventYMP0, event.data+1);
+			continue;
+		case 0x53:
+			Codec.eventWrite(curSamp, EventYMP1, event.data+1);
+			continue;
+		case 0x80 ... 0x8F:
+			Codec.dacWrite(curSamp);
+			continue;
+		case 0xe0: // Dac seek
+			Codec.eventWrite(curSamp, EventSEEK, event.data+1);
+			continue;
+		case 0x4f: // Psg Stereo
+			Codec.eventWrite(curSamp, EventPSGS, event.data+1);
+			continue;
+		case 0x66: // Vgm end
+			Codec.eventWrite(curSamp, Event_END, event.data+1);
+			Codec.Flush(curSamp);
+			break;
+		}
+		
+		break;
+	}
+	
+#if 0
 	
 	// pass 2 exception block
 	{
@@ -318,6 +404,7 @@ int VgmConv::vgmConvert(vgmFile& vgmInfo)
 			break;
 		}
 	}
+#endif
 
 	if(options & vgcFormat)
 	{

@@ -1,6 +1,7 @@
 #include "stdshit.h"
 #include "ccstuff.h"
 #include <errno.h>
+#include <stdarg.h>
 
 void AutoMem_Free(void* pHack)
 {
@@ -94,3 +95,41 @@ nchar* replName(const nchar* path, const nchar* name)
 	
 	return (nchar*)buff;
 }
+
+__thiscall
+void* xrealloc(void* ptr, size_t size) {
+	void* tmp = realloc(*(void**)ptr, size);
+	*(void**)ptr = tmp; return tmp; }
+
+__thiscall
+void* xNextAlloc_(void* ptr, uint& count, uint size)
+{
+	uint tmp = count; count++;
+	char* base;
+
+	if(!(tmp & (tmp-1))) {
+		uint xxx = tmp; xxx *= 2; if(!xxx) xxx = 1;
+		base = (char*)xrealloc(ptr, xxx*size);
+	} else { base = *(char**)ptr; }
+	return  base + tmp*size;
+}
+
+
+// error handling
+void fatal_error(const char*fmt,...) {
+	va_list args; va_start (args, fmt);
+	vfprintf(stderr, fmt,args);
+	exit(1); va_end (args); }
+#define FATAL_ERROR(str, arg, fileName) \
+	fatal_error(str ", \"%s\"\n", arg, fileName);
+void load_error(const char* type, const char* fileName) {
+	FATAL_ERROR("%s: open failed", type, fileName); }
+void file_corrupt(const char* type, const char* fileName) {
+	FATAL_ERROR("%s: file corrupt", type, fileName); }
+void file_bad(const char* type, const char* fileName) {
+	FATAL_ERROR("%s: unsupported file data", type, fileName); }
+void recurse_error(const char* type) {
+	fatal_error("%s: infinite recursion error", type); }
+	
+#define error_msg(fmt, ...) \
+	fprintf(stderr, fmt, __VA_ARGS__);

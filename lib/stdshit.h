@@ -12,6 +12,7 @@ struct name { T a; U b; name() {} \
 	name(T ai, U bi) { a = ai; b = bi; } \
 	operator T&() { return a; } };
 typedef unsigned char 	byte;
+typedef unsigned short	u16;
 typedef unsigned int 	uint;
 
 char* load_file(nchar* name, size_t& size);
@@ -31,5 +32,25 @@ int strsize(const nchar* str);
 #define ZINIT memset(this, 0, sizeof(*this))
 
 nchar* replName(const nchar* path, const nchar* name);
+
+__thiscall
+void* xNextAlloc_(void* ptr, uint& count, uint size);
+template<class T>
+T& xNextAlloc(T*& ptr, uint& count) {
+	return *(T*)xNextAlloc_(&ptr, count, sizeof(T)); }
+
+
+// error handling
+[[noreturn]] void fatal_error(const char*fmt,...);
+[[noreturn]] void load_error(const char* type, const char* fileName);
+[[noreturn]] void file_corrupt(const char* type, const char* fileName);
+[[noreturn]] void file_bad(const char* type, const char* fileName);
+[[noreturn]] void recurse_error(const char* type);
+	
+#define error_msg(fmt, ...) \
+	fprintf(stderr, fmt, __VA_ARGS__);
+	
+#define ZINIT memset(this, 0, sizeof(*this))
+
 
 #endif

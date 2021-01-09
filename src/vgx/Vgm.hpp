@@ -27,6 +27,12 @@ public:
 	int samples;
 	int loopSamp;
 	DataBlock dataBlock;
+		
+	char* getLoop() {
+		if(loopIndex != 0xffffffff) {
+			return mainData + loopIndex;
+		} else return NULL;
+	}
 };
 
 inline
