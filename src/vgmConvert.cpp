@@ -33,34 +33,10 @@ void vgmEvents_dedup(VgmEvents& events);
 
 int VgmConv::vgmConvert(vgmFile& vgmInfo)
 {
-	printf("hello\n");
-
-
 	VgmEvents events;
-	if(!events.init(vgmInfo)) {
+	if(!events.init(vgmInfo))
 		fatal_error("sdfsdf");
-		
-		
-		
-	
-	
-	}
-	
 	vgmEvents_dedup(events);
-	
-#if 0
-		int initBlockSample = -1;
-	
-		for(auto& event : events) {
-			printf("%d: %X, %X, %X\n", event.sample, event.data[0], event.data[1], event.data[2], event.data[0]);
-			if(initBlockSample < 0) {
-				if(event.data) initBlockSample = event.sample; }
-			else if(initBlockSample < event.sample)
-				break;
-		}
-		printf("hello2\n");
-#endif
-	
 
 #if 0
 

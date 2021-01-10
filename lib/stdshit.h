@@ -52,5 +52,7 @@ T& xNextAlloc(T*& ptr, uint& count) {
 	
 #define ZINIT memset(this, 0, sizeof(*this))
 
+template <class T, class U, class V> constexpr bool inRng(
+	T t, U u, V v) { return (t >= u)&&(t <= v); }
 
 #endif
