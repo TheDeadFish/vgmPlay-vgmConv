@@ -47,7 +47,7 @@ struct VgmEvents
 #define VGMEVENT_FILTER(events, atLoop, atFrame, main) { \
 	int prevSamp = -1; VgmEvent* prevSampPos = NULL; \
 	for(auto& event : events) { int cmd = event.getCmd(); \
-		if(events.loop(event)) { atLoop; goto NX; } \
-		if((prevSamp != event.sample)||(cmd == 0x66)) { \
-			NX: atFrame; prevSampPos = &event; } \
+		if((events.loop(event) && (({atLoop}), 1)) \
+		||(prevSamp != event.sample)||(cmd == 0x66)) { \
+			atFrame; prevSampPos = &event; } \
 		main; prevSamp = event.sample; } }
