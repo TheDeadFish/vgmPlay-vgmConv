@@ -142,6 +142,77 @@ void filter_ym2612_init(VgmEvents& events)
 	));
 }
 
+struct Ym2612State {
+	short regs[512];
+	
+	Ym2612State();
+	
+	bool write(int addr, int data, bool hwMode);
+	
+	bool write(int addr, int data);
+	bool writeFreq(int addr, int data);
+	
+	void loop(Ym2612State& that);
+	
+};
+
+Ym2612State::Ym2612State()
+{
+	ZINIT;
+	regs[0xB0] = 0xC0; regs[0x1B0] = 0xC0;
+	regs[0xB1] = 0xC0; regs[0x1B1] = 0xC0;
+	regs[0xB2] = 0xC0; regs[0x1B2] = 0xC0;
+}
+
+void Ym2612State::loop(Ym2612State& that)
+{
+	for(int i = 0; i < 512; i++) {
+		if(regs[i] != that.regs[i])
+			regs[i] = -1; }
+}
+
+bool Ym2612State::writeFreq(int addr, int data)
+{
+	int latchAddr = 0x10 | (addr & 4);
+	if(addr & 8) { return write(latchAddr, data); }
+	else { return write(addr, data)
+		|| write(addr|4, regs[latchAddr]); }
+}
+
+bool Ym2612State::write(int addr, int data)
+{
+	if(addr == 0x28) { addr = data & 7; data &= 0xF0; }
+	int oldVal = regs[addr]; regs[addr] = data;
+	return (oldVal != data)||(data < 0);
+}
+
+bool Ym2612State::write(int addr, int data, bool safeMode)
+{
+	if((addr & 0xF0) == 0xA0) {
+		return writeFreq(addr, data) || safeMode;
+	} else {
+		return write(addr, data);
+	}
+}
+
+void filter_ym2612_dup(VgmEvents& events, bool safeMode)
+{
+	Ym2612State lastState;
+	VGMEVENT_FILTER(events,,,
+	YM2612_EVENT(
+		lastState.write(addr, data, safeMode);
+	));
+	
+	Ym2612State state;
+	VGMEVENT_FILTER(events,
+		state.loop(lastState);
+	,,
+	YM2612_EVENT(
+		if(!state.write(addr, data, safeMode))
+			event.data = NULL;
+	));
+}
+
 void vgmEvents_print(
 	VgmEvents& events, const char* fName)
 {
@@ -181,6 +252,7 @@ void vgmEvents_dedup(VgmEvents& events)
 	vgmEvents_print(events, "pre-filter.txt");
 	filter_dac(events);
 	filter_ym2612_init(events);
+	filter_ym2612_dup(events, false);
 	
 	vgmEvents_print(events, "post-filter.txt");
 }
