@@ -226,6 +226,7 @@ void vgmEvents_print(
 			switch(event[0]) {
 			case 0x50:
 				fprintf(fp, "PSG: %X\n", event[1]);
+				break;
 			case 0x52:
 				fprintf(fp, "YMP0: %X, %X\n", event[1], event[2]);
 				break;
