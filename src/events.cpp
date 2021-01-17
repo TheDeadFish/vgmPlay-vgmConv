@@ -213,6 +213,24 @@ void filter_ym2612_dup(VgmEvents& events, bool safeMode)
 	));
 }
 
+
+void filter_ym2612_freq(VgmEvents& events, bool safeMode)
+{
+	if(safeMode) return;
+
+	VgmEvent* regs[2] = {};
+	VGMEVENT_FILTER(events,,,
+	YM2612_EVENT(
+		if((addr & 0xF0) == 0xA0) {
+			int addrH = (addr & 8) / 8;
+			if(addr & 4) {
+				if(regs[addrH]) { regs[addrH]->data = NULL;	}
+				regs[addrH] = &event;
+			} else { regs[addrH] = NULL; }
+		}
+	));
+}
+
 void vgmEvents_print(
 	VgmEvents& events, const char* fName)
 {
@@ -254,6 +272,7 @@ void vgmEvents_dedup(VgmEvents& events)
 	filter_dac(events);
 	filter_ym2612_init(events);
 	filter_ym2612_dup(events, false);
+	filter_ym2612_freq(events, false);
 	
 	vgmEvents_print(events, "post-filter.txt");
 }
