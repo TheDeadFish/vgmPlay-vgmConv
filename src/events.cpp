@@ -97,6 +97,35 @@ struct DacMask {
 #define YM2612_EVENT(...) if(inRng(cmd, 0x52, 0x53)) { \
 	int addr = event[1]; int data = event[2]; \
 	if(cmd == 0x53) addr += 256; __VA_ARGS__; }
+	
+void filter_freq_fix(VgmEvents& events)
+{
+	struct SwapInfo { u16 addr; byte index; };
+	static const SwapInfo swapInfo[18] = {
+		{0x0A4, 0}, {0x1A4, 6}, {0x0A5, 6}, {0x1A5, 7}, {0x0A6, 6}, {0x1A6, 8},
+		{0x0A0, 7}, {0x1A0, 9}, {0x0A1, 9}, {0x1A1, 10}, {0x0A2, 10}, {0x1A2, 11},
+		{0x0AC, 12}, {0x0AD, 15}, {0x0AE, 15}, {0x0A8, 16}, {0x0A9, 16}, {0x0AA, 17}
+	};
+	
+	byte** pLst[18];
+	int matchLen = 0;
+	
+	VGMEVENT_FILTER(events,
+		 matchLen = 0;
+	,,
+		if(events.initEnd(event)) break;
+		YM2612_EVENT(
+			if(swapInfo[matchLen].addr != u16(addr)) matchLen = 0;
+			else { pLst[matchLen] = &event.data; matchLen++;
+				if(matchLen == 18) {
+					for(int i = 0; i < 18; i++)
+						swap(*pLst[i], *pLst[swapInfo[i].index]);
+					matchLen = 0;
+				}
+			}
+		);
+	);
+}
 
 void filter_ym2612_init(VgmEvents& events)
 {
@@ -269,6 +298,7 @@ void vgmEvents_print(
 void vgmEvents_dedup(VgmEvents& events)
 {
 	vgmEvents_print(events, "pre-filter.txt");
+	filter_freq_fix(events);
 	filter_dac(events);
 	filter_ym2612_init(events);
 	filter_ym2612_dup(events, false);

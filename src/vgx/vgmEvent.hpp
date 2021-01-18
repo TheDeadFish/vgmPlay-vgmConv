@@ -36,6 +36,8 @@ struct VgmEvents
 	
 	bool loop(VgmEvent& event) {
 		return &event == loopPos; }
+	bool initEnd(VgmEvent& event) {
+		return event.sample > initSample; }
 	
 	VgmEvent* begin() { return events; }
 	VgmEvent* end() { return events+nEvents; }

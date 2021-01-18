@@ -55,4 +55,9 @@ T& xNextAlloc(T*& ptr, uint& count) {
 template <class T, class U, class V> constexpr bool inRng(
 	T t, U u, V v) { return (t >= u)&&(t <= v); }
 
+// std::swap is broken
+template <class T>
+void swap(T& x, T& y) {
+	auto tmp = x; x = y; y = tmp; }
+
 #endif
