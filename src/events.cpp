@@ -3,39 +3,102 @@
 #include <windows.h>
 #include "ymRegs.h"
 
+struct FilterDac
+{
+	VgmEvent* firstWrite;
+	VgmEvent* lastWrite8n;
+	VgmEvent* lastWrite2A;
+	VgmEvent* lastSeek8n;
+	VgmEvent* lastSeek;
+	int dacPos, dacPos8n;
+
+	FilterDac() { reset(); }
+	void reset() { ZINIT; }
+	
+	void write(VgmEvent& event) {
+		if(!firstWrite) firstWrite = &event;
+	}	
+	
+	void seek(VgmEvent& event) {
+		lastSeek = &event;
+		dacPos = event.getInt();
+		this->write(event);
+	}
+	
+	void write8n(VgmEvent& event) {
+		lastWrite8n = &event;
+		lastSeek8n = lastSeek;
+		dacPos8n = dacPos++;
+		this->write(event);
+	}
+	
+	void write2A(VgmEvent& event) {
+		lastWrite2A = &event;
+		this->write(event);
+	}
+	
+	void flush(VgmEvent& end)
+	{
+		if(!firstWrite) return;
+		
+		if(lastWrite2A < lastWrite8n)
+			lastWrite2A = NULL;
+		if(lastWrite8n < lastWrite2A) {
+			lastWrite8n = NULL; dacPos8n++; }
+		if(lastSeek8n) {
+			lastSeek8n->setInt(dacPos8n);
+			if((lastSeek8n == lastSeek)
+			&&(lastWrite8n == NULL))
+				lastSeek8n = NULL; }
+		
+		for(auto* x = firstWrite; x < &end; x++) {
+			switch(x->getCmd()) {
+			case 0x80 ... 0x8F:
+				if(lastSeek
+				&&(x != lastWrite8n))
+					x->kill();
+				break;
+			case 0xE0:
+				if((x != lastSeek8n)
+				&&(x != lastSeek))
+					x->kill();
+				break;
+			case 0x52:
+				if((x->data[1] == 0x2A)
+				&&(x != lastWrite2A))
+					x->kill();
+				break;
+			}
+		}
+	}
+};
+
+
 void filter_dac(VgmEvents& events)
 {
-	VgmEvent* lastWrite = NULL;
-	VgmEvent* writeSeek = NULL;
-	VgmEvent* lastSeek = NULL;
+	FilterDac filterDac;
+	byte dacEnable = 0;
 	
-	VGMEVENT_FILTER(events,,
-	
-		if(lastWrite && writeSeek) {
-			
-			for(; prevSampPos < writeSeek; prevSampPos++) {
-				prevSampPos->filter(0x80, 0x8F);
-				prevSampPos->filter(0xE0); }
-			
-			int dacPos = prevSampPos->getInt();
-			for(; prevSampPos < lastWrite; prevSampPos++) {
-				if(prevSampPos->filter(0x80, 0x8F)) dacPos++; }
-			writeSeek->setInt(dacPos);
+	VGMEVENT_FILTER(events,
+		dacEnable = -1;
+	,
+		if(dacEnable & 0x80) {
+			filterDac.flush(event);
+			filterDac.reset();
 		}
-
-		// reset state
-		lastWrite = NULL;
-		writeSeek = NULL;
-		lastSeek = NULL;
-		
 	,
 		switch(cmd) {
 		case 0x80 ... 0x8F:
-			lastWrite = &event;
-			writeSeek = lastSeek;
+			filterDac.write8n(event);
 			break;
 		case 0xE0:
-			lastSeek = &event;
+			filterDac.seek(event);
+			break;
+		case 0x52:
+			if(event[1] == 0x2B)
+				dacEnable |= event[2];
+			if(event[1] == 0x2A) {
+				filterDac.write2A(event); }
 			break;
 		}
 	);

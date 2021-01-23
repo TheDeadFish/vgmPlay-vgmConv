@@ -12,6 +12,8 @@ struct VgmEvent
 	
 	int getCmd() { return data ? data[0] : -1; }
 	
+	void kill() { data = NULL; }
+	
 	
 	bool filter(int type) { if(getCmd() == type) {
 		data = NULL; return true; } return false; }
