@@ -1,7 +1,44 @@
 #include "stdshit.h"
 #include "vgx/vgmEvent.hpp"
 #include <windows.h>
-#include "ymRegs.h"
+
+enum {
+	YMGRP_CHN0 = 0x80,
+	YMGRP_CHN2 = 0x82,
+	YMGRP_CHN3 = 0x84,
+	YMGRP_CHNX = 0x83,
+	YMGRP_ALWAYS = 0x87,
+	YMGRP_NEVER = 0
+};
+
+int ymRegs(int addr)
+{
+	byte bAddr = addr;
+
+	if(inRng(bAddr, 0x30, 0xB7)) {
+		if((bAddr & 3) == 3) 
+			return YMGRP_NEVER;
+		if((bAddr & 0xF8) == 0xA8)
+			return YMGRP_CHN2;
+		
+		if(addr > 255) {
+			return YMGRP_CHN3 | (bAddr & 3);
+		} else {
+			return YMGRP_CHN0 | (bAddr & 3);
+		}
+	}
+	
+	switch(addr) {
+	case 0x22: return YMGRP_CHNX;
+	case 0x27: return YMGRP_CHNX;
+	case 0x28: return YMGRP_ALWAYS;
+	case 0x2A: return YMGRP_ALWAYS;
+	case 0x2B: return YMGRP_ALWAYS;
+	default:
+		return YMGRP_NEVER;
+	}
+}
+
 
 struct FilterDac
 {
@@ -121,7 +158,7 @@ void YmPtrList::noteOn(byte data)
 {
 	data &= 7;
 	for(int addr = 0; addr < 512; addr++) {
-		byte reg = ymRegs[addr] & 7;
+		byte reg = ymRegs(addr) & 7;
 		if((reg == 3)||(reg == data))
 			reset(addr);
 	}
@@ -211,7 +248,7 @@ void filter_ym2612_init(VgmEvents& events)
 		
 	,,
 	YM2612_EVENT(
-		byte reg = ymRegs[addr];
+		byte reg = ymRegs(addr);
 		if(!reg || !lastKeyMask[reg&7]) {
 			if((addr == 0x1B6)&&(lastDacMask.mask))
 				goto SKIP_KILL;
