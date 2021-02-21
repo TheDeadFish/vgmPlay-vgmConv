@@ -3,12 +3,18 @@
 #include <windows.h>
 
 enum {
-	YMGRP_CHN0 = 0x80,
-	YMGRP_CHN2 = 0x82,
-	YMGRP_CHN3 = 0x84,
-	YMGRP_CHNX = 0x83,
-	YMGRP_ALWAYS = 0x87,
-	YMGRP_NEVER = 0
+	YMGRP_CHN0,
+	YMGRP_CHN1,
+	YMGRP_CHN2,
+	YMGRP_MODE3,
+	YMGRP_CHN3,
+	YMGRP_CHN4,
+	YMGRP_CHN5,
+	YMGRP_CHNX,
+	YMGRP_1B6,
+	YMGRP_ALWAYS,
+	YMGRP_NEVER,
+	YMGRP_MAX
 };
 
 int ymRegs(int addr)
@@ -158,18 +164,18 @@ void YmPtrList::noteOn(byte data)
 {
 	data &= 7;
 	for(int addr = 0; addr < 512; addr++) {
-		byte reg = ymRegs(addr) & 7;
-		if((reg == 3)||(reg == data))
+		byte reg = ymRegs(addr);
+		if((reg == YMGRP_CHNX)||(reg == data))
 			reset(addr);
 	}
 }
 
 
 struct KeyMask {
-	byte mask[8];
+	byte mask[YMGRP_MAX];
 	
 	
-	KeyMask() { ZINIT; mask[7] = 0xF0; }
+	KeyMask() { ZINIT; mask[YMGRP_ALWAYS] = 0xF0; }
 	
 	
 	byte& operator[](size_t i) { return mask[i]; }
@@ -178,7 +184,7 @@ struct KeyMask {
 	
 	void noteOn(byte data) {
 		mask[data & 7] |= data & 0xF0;
-		mask[3] |= data & 0xF0; }
+		mask[YMGRP_CHNX] |= data & 0xF0; }
 };
 
 byte KeyMask::write(int addr, int data) {
@@ -249,7 +255,7 @@ void filter_ym2612_init(VgmEvents& events)
 	,,
 	YM2612_EVENT(
 		byte reg = ymRegs(addr);
-		if(!reg || !lastKeyMask[reg&7]) {
+		if(!lastKeyMask[reg]) {
 			if((addr == 0x1B6)&&(lastDacMask.mask))
 				goto SKIP_KILL;
 			event.data = NULL;
@@ -263,7 +269,7 @@ void filter_ym2612_init(VgmEvents& events)
 			pLst.kill(addr);
 			if((addr & 0xF8) == 0xA8) goto SKIP_SET;
 			if(((addr & 0xF0) == 0x90)&&(data)) goto SKIP_SET;
-			if(keyMask[reg&7]) goto SKIP_SET;
+			if(keyMask[reg]) goto SKIP_SET;
 			if((addr == 0x1B6)&&(dacMask.mask)) goto SKIP_SET;
 			pLst.set(addr, event);
 		SKIP_SET:;
