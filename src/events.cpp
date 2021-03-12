@@ -25,9 +25,11 @@ int ymRegs(int addr)
 		if((bAddr & 3) == 3) 
 			return YMGRP_NEVER;
 		if((bAddr & 0xF8) == 0xA8)
-			return YMGRP_CHN2;
+			return YMGRP_MODE3;
 		
 		if(addr > 255) {
+			if(addr == 0x1B6)
+				return YMGRP_1B6;
 			return YMGRP_CHN3 | (bAddr & 3);
 		} else {
 			return YMGRP_CHN0 | (bAddr & 3);
@@ -36,7 +38,7 @@ int ymRegs(int addr)
 	
 	switch(addr) {
 	case 0x22: return YMGRP_CHNX;
-	case 0x27: return YMGRP_CHNX;
+	case 0x27: return YMGRP_MODE3;
 	case 0x28: return YMGRP_ALWAYS;
 	case 0x2A: return YMGRP_ALWAYS;
 	case 0x2B: return YMGRP_ALWAYS;
@@ -157,15 +159,13 @@ struct YmPtrList {
 	void set(int addr, VgmEvent& event) {
 		data[addr] = &event; }
 	void reset(int addr) { data[addr] = NULL; }
-	void noteOn(byte data);
+	void noteOn(byte* mask);
 };
 
-void YmPtrList::noteOn(byte data)
+void YmPtrList::noteOn(byte* mask)
 {
-	data &= 7;
 	for(int addr = 0; addr < 512; addr++) {
-		byte reg = ymRegs(addr);
-		if((reg == YMGRP_CHNX)||(reg == data))
+		if(mask[ymRegs(addr)])
 			reset(addr);
 	}
 }
@@ -173,7 +173,7 @@ void YmPtrList::noteOn(byte data)
 
 struct KeyMask {
 	byte mask[YMGRP_MAX];
-	
+	byte mode3State;
 	
 	KeyMask() { ZINIT; mask[YMGRP_ALWAYS] = 0xF0; }
 	
@@ -181,24 +181,36 @@ struct KeyMask {
 	byte& operator[](size_t i) { return mask[i]; }
 	
 	byte write(int addr, int data);
-	
-	void noteOn(byte data) {
-		mask[data & 7] |= data & 0xF0;
-		mask[YMGRP_CHNX] |= data & 0xF0; }
 };
 
-byte KeyMask::write(int addr, int data) {
-	if(addr != 0x28) return false;
-	noteOn(data); return data & 0xF0; }
+byte KeyMask::write(int addr, int data)
+{
+	switch(addr) {
+	case 0x28: {
+		int chnl = data & 7; data &= 0xF0;
+		mask[chnl] |= data;
+		mask[YMGRP_CHNX] |= data;
+		mask[YMGRP_1B6] |= mask[YMGRP_CHN5];
+		break; }
 
-struct DacMask {
-	byte mask = 0;
-	
-	byte write(int addr, int data) {
-		if(addr != 0x2B) return false;
-		mask |= data; return data; }
-};
+	case 0x2B:
+		data &= 0x80;
+		mask[YMGRP_1B6] |= data;
+		return data;
 
+	case 0x27:
+		data &= 0xC0;
+		mode3State |= data;
+		break;
+
+	default:
+		return 0;
+	}
+
+	if(mode3State)
+		mask[YMGRP_MODE3] = mask[YMGRP_CHN2];
+	return data;
+}
 
 #define YM2612_EVENT(...) if(inRng(cmd, 0x52, 0x53)) { \
 	int addr = event[1]; int data = event[2]; \
@@ -237,40 +249,27 @@ void filter_ym2612_init(VgmEvents& events)
 {
 	// get last keyOn mask
 	KeyMask lastKeyMask;
-	DacMask lastDacMask;
 	VGMEVENT_FILTER(events,,,
 	YM2612_EVENT(
 		lastKeyMask.write(addr, data);
-		lastDacMask.write(addr, data);
 	));
 
 	// kill redundant writes
 	YmPtrList pLst;
 	KeyMask keyMask;
-	DacMask dacMask;
 	VGMEVENT_FILTER(events,
 		keyMask = lastKeyMask;
-		dacMask = lastDacMask;
-		
 	,,
 	YM2612_EVENT(
 		byte reg = ymRegs(addr);
 		if(!lastKeyMask[reg]) {
-			if((addr == 0x1B6)&&(lastDacMask.mask))
-				goto SKIP_KILL;
 			event.data = NULL;
 		} else {
-		SKIP_KILL:
 			if(keyMask.write(addr, data))
-				pLst.noteOn(data);
-			if(dacMask.write(addr, data))
-				pLst.reset(0x1B6);
-			
+				pLst.noteOn(keyMask.mask);
 			pLst.kill(addr);
-			if((addr & 0xF8) == 0xA8) goto SKIP_SET;
-			if(((addr & 0xF0) == 0x90)&&(data)) goto SKIP_SET;
+			if((addr & 0xF4) == 0xA4) goto SKIP_SET;
 			if(keyMask[reg]) goto SKIP_SET;
-			if((addr == 0x1B6)&&(dacMask.mask)) goto SKIP_SET;
 			pLst.set(addr, event);
 		SKIP_SET:;
 		}
